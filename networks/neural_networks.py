@@ -22,13 +22,13 @@ class D_Conv(nn.Module):
         modules : List[nn.Module] = []
         size_conv = [
             (alpha,1),
-            (2*alpha,2), #remove stride for now
+            (2*alpha,2),
             (2*alpha,1),
-            (4*alpha,2), #here too
+            (4*alpha,2),
             (4*alpha,1),
-            (8*alpha,2), # here too
+            (8*alpha,2), 
             (8*alpha,1),
-            (16*alpha,2)] # here too
+            (16*alpha,2)] 
         
         for i,val in enumerate(size_conv):
             size_out, stride = val
@@ -70,10 +70,14 @@ class S_Conv(nn.Module):
         im_size : int = image_size
         
         im_size,channel_size, self.conv = net_type(channel_size,alpha,9,2,im_size).get_module()
-        self.fc = nn.Linear(channel_size*im_size**2,24*alpha)
+        self.fc = nn.Sequential(
+            nn.Linear(channel_size*im_size**2,24*alpha),
+            nn.BatchNorm1d(24*alpha),
+            nn.ReLU()
+        )
+        
         if dropout_1:
             self.dropout = nn.Dropout(p=0.5)
-        self.relu = nn.ReLU()
         self.fc_final = nn.Linear(24*alpha,out_size)
         if dropout_2:
             self.dropout2 = nn.Dropout(p=0.5)

@@ -18,11 +18,7 @@ class LocalLinear_custom(nn.Module):
         self.conv = torch.nn.Conv2d(in_features, out_features, self.kernel_size, stride=1, padding=0)
         
     def forward(self, x:torch.Tensor):
-        x = F.pad(x, [self.padding]*4, value= 0)
-        x = x.unfold(2, self.kernel_size, self.stride).unfold(3, self.kernel_size, self.stride)
-        x = x.flatten(1,3)
-        x = self.conv(x)
-        x = x.view(-1, self.out_channels, self.fold_num, self.fold_num)
+        raise NotImplementedError("LocalLinear_custom is not implemented")
         return x
 
 class view_custom(nn.Module):
@@ -83,7 +79,6 @@ class LL_custom(nn.Module,interfaceModule):
 class FC_custom(nn.Module,interfaceModule):
     def __init__(self, size_in: int, size_out: int, kernel_size: int, stride: int, image_size: int ):
         super(FC_custom, self).__init__()
-        padding = kernel_size//2
         self.size_out = size_out
         self.im_out = image_size//stride
 

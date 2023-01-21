@@ -1,0 +1,79 @@
+[
+    {
+        "accuracy": 0.0,
+        "batch_size": 512,
+        "epoch":200,
+        "use_cuda":true,
+        "model":"S-CONV",
+        "dataset":"CIFAR-10",
+        "optimizer":"SGD",
+        "scheduler":"CosineAnnealingWarmRestarts",
+
+        "optimizer_params":{
+            "lr":0.1,
+            "momentum":0.9,
+            "weight_decay":0
+        },
+        "dataset_params":{
+            "transforms":[
+                "FastAutoAugment",
+                "ToTensor"
+            ]
+        },
+        "model_params":{
+            "alpha": 204,
+            "dropout_1": false,
+            "dropout_2": false
+        },
+        "scheduler_params":{
+            "T_0": 50,
+            "T_mult": 1,
+            "eta_min": 0,
+            "last_epoch": -1
+        },
+        "optimize":
+        {
+            "optimizer_params.momentum" : [0.9,0],
+            "model_params.dropout_1" : [false,true],
+            "model_params.dropout_2" : [false,true],
+            "optimizer_params.weight_decay" : [0,1e-4,0.0002,0.0005,1e-3],
+            "scheduler_params.T_0": [50,5,20],
+            "scheduler_params.T_mult": [1,2,5]
+        }
+
+    },
+    {
+        "accuracy": 0.0,
+        "batch_size": 512,
+        "epoch":200,
+        "use_cuda":true,
+        "model":"S-CONV",
+        "dataset":"CIFAR-10",
+        "optimizer":"SGD",
+        "scheduler":"CosineAnnealingWarmRestarts",
+
+        "optimizer_params":{
+            "lr":0.1,
+            "momentum":0.9,
+            "weight_decay":0
+        },
+        "dataset_params":{
+            "transforms":[
+                "FastAutoAugment",
+                "ToTensor"
+            ]
+        },
+        "model_params":{
+            "alpha": 204,
+            "dropout_1": false,
+            "dropout_2": false
+        },
+        "scheduler_params":{
+            "T_0": 50,
+            "T_mult": 1,
+            "eta_min": 0,
+            "last_epoch": -1
+        }   
+
+    }
+]
