@@ -6,7 +6,13 @@ from typing import Type,List
 
 class D_Conv(nn.Module):
     ### only works with square image, kernel size and stride
-    def __init__(self, base_channel_size: int, net_type : Type[cl.interfaceModule] , image_size :int, out_size = 10 ) -> None:
+    def __init__(        self,
+        base_channel_size: int,
+        net_type :Type[cl.interfaceModule],
+        image_size :int,
+        out_size = 10,
+        dropout_1 = True,
+        dropout_2 = True ) -> None:
         super().__init__()
         
         alpha = base_channel_size
@@ -30,18 +36,33 @@ class D_Conv(nn.Module):
             modules.append(new_module)
             
         self.conv = nn.Sequential(*modules)
-        im_size,channel_size,self.fc = cl.FC_custom(channel_size,64*alpha,0,1,im_size).get_module()
-        self.fc_final = nn.Linear(channel_size*im_size**2,out_size)
+        self.fc = nn.Linear(channel_size*im_size**2,24*alpha)
+        if dropout_1:
+            self.dropout = nn.Dropout(p=0.5)
+        self.relu = nn.ReLU()
+        self.fc_final = nn.Linear(24*alpha,out_size)
+        if dropout_2:
+            self.dropout2 = nn.Dropout(p=0.5)
 
     def forward(self, x):
         x = self.conv(x)
-        x = self.fc(x)
         x = torch.flatten(x, 1)
+        x = self.fc(x)
+        if hasattr(self, 'dropout'):
+            x = self.dropout(x)
         x = self.fc_final(x)
-        return x
+        if hasattr(self, 'dropout2'):
+            x = self.dropout2(x)
 
 class S_Conv(nn.Module):
-    def __init__(self, base_channel_size: int, net_type :Type[cl.interfaceModule], image_size :int,out_size = 10) -> None:
+    def __init__(
+        self,
+        base_channel_size: int,
+        net_type :Type[cl.interfaceModule],
+        image_size :int,
+        out_size = 10,
+        dropout_1 = True,
+        dropout_2 = True) -> None:
         super().__init__()
         
         alpha = base_channel_size
@@ -49,12 +70,21 @@ class S_Conv(nn.Module):
         im_size : int = image_size
         
         im_size,channel_size, self.conv = net_type(channel_size,alpha,9,2,im_size).get_module()
-        im_size,channel_size, self.fc = cl.FC_custom(channel_size,24*alpha,0,1,im_size).get_module()
-        self.fc_final = nn.Linear(channel_size*im_size**2,out_size)
+        self.fc = nn.Linear(channel_size*im_size**2,24*alpha)
+        if dropout_1:
+            self.dropout = nn.Dropout(p=0.5)
+        self.relu = nn.ReLU()
+        self.fc_final = nn.Linear(24*alpha,out_size)
+        if dropout_2:
+            self.dropout2 = nn.Dropout(p=0.5)
 
     def forward(self, x):
         x = self.conv(x)
-        x = self.fc(x)
         x = torch.flatten(x, 1)
+        x = self.fc(x)
+        if hasattr(self, 'dropout'):
+            x = self.dropout(x)
         x = self.fc_final(x)
+        if hasattr(self, 'dropout2'):
+            x = self.dropout2(x)
         return x

@@ -1,3 +1,3 @@
 Model,Training_Method,CIFAR-10,CIFAR-100,SVHN
-S-CONV,SGD,48%,21%,19%
+S-CONV,SGD,41%,1%,19%
 S-FC,SGD,31%,17%,0
