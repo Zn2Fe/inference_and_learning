@@ -64,8 +64,7 @@ class interfaceModule():
     def __init__(self,size_in: int, size_out: int, kernel_size: int, stride: int, image_size: int ) -> None:
         pass
     def get_module(self) -> Tuple[int,int,nn.Module]:
-        print("interfaceModule should not be called")
-        return 0,0,nn.Module()
+        raise ValueError("interaceModule should not be called")
 
 class CV_Custom(nn.Module,interfaceModule):
     def __init__(self, size_in: int, size_out: int, kernel_size: int, stride: int, image_size: int ):

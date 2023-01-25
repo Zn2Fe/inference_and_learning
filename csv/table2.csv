@@ -1,4 +1,5 @@
 Model,Training_Method,CIFAR-10,CIFAR-100,SVHN
+S-LOCAL,SGD,0%,0%,0%
 S-FC,B-lasso(B=0),0%,0%,0%
 S-FC,B-lasso(B=1),0%,0%,0%
 S-FC,B-lasso(B=50),0%,0%,0%
