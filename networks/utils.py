@@ -1,3 +1,6 @@
+import torch
+
+#region printers
 def pd_dict_to_string(pd_dict,model)->str:
     out = f"Network: {pd_dict['model']}, {pd_dict['dataset']}, {pd_dict['optimizer']}"
     out += f" using : {sum(p.numel() for p in model.parameters())/1000000} M parameters"
@@ -28,3 +31,20 @@ def list_printer(list_in,o):
         else:
             print(o*"\t" +f"{i} : {v}")
              
+#endregion
+
+#region Model
+def get_accuracy(model, testloader, DEVICE):
+        correct = 0
+        total = 0
+        # since we're not training, we don't need to calculate the gradients for our outputs
+        model.to(DEVICE)
+        with torch.no_grad():
+            for data in testloader:
+                images, labels = data[0].to(DEVICE), data[1].to(DEVICE)
+                outputs = model(images)
+                _, predicted = torch.max(outputs.data, 1)
+                total += labels.size(0)
+                correct += (predicted == labels).sum().item()
+        return 100 * correct / total   
+#endregion
