@@ -100,9 +100,9 @@ def train(net:dict, DATA_PATH,save_number_of_non_zero = False,verbose=False,very
         if not isinstance(model,cl.S_Conv):
             raise ValueError("Model must be S_Conv")
         number_of_non_zero = {
-            "conv_like":[n_utils.get_number_of_non_zero_parameters(model,"conv_like")],
-            "FC1":[n_utils.get_number_of_non_zero_parameters(model,"FC.0")],
-            "FC2":[n_utils.get_number_of_non_zero_parameters(model,"FC.3")],
+            "conv_like":[n_utils.count_non_zero_parameters(model,"conv_like")],
+            "FC1":[n_utils.count_non_zero_parameters(model,"FC.0")],
+            "FC2":[n_utils.count_non_zero_parameters(model,"FC.3")],
         }
     #Training method
     criterion = nn.CrossEntropyLoss()
@@ -126,9 +126,9 @@ def train(net:dict, DATA_PATH,save_number_of_non_zero = False,verbose=False,very
             if(epoch % 10 == 10-1) : print(f' : {epoch+1}/{net["epoch"]}')
             elif(epoch == net["epoch"]-1): print(f' : {epoch+1}/{net["epoch"]}')
         if save_number_of_non_zero:
-            number_of_non_zero["conv_like"].append(n_utils.get_number_of_non_zero_parameters(model,"conv_like"))
-            number_of_non_zero["FC1"].append(n_utils.get_number_of_non_zero_parameters(model,"FC.0"))
-            number_of_non_zero["FC2"].append(n_utils.get_number_of_non_zero_parameters(model,"FC.3"))
+            number_of_non_zero["conv_like"].append(n_utils.count_non_zero_parameters(model,"conv_like"))
+            number_of_non_zero["FC1"].append(n_utils.count_non_zero_parameters(model,"FC.0"))
+            number_of_non_zero["FC2"].append(n_utils.count_non_zero_parameters(model,"FC.3"))
     
     acc = n_utils.get_accuracy(model, testLoader,DEVICE)
     if verbose:

@@ -6,7 +6,7 @@ from typing import overload
 #region printers
 def pd_dict_to_string(pd_dict,model)->str:
     out = f"Network: {pd_dict['model']['name']}, {pd_dict['dataset']['name']}, {pd_dict['optimizer']['name']}"
-    out += f" using : {get_number_of_parameters(model)/1000000} M parameters"
+    out += f" using : {count_parameters(model)/1000000} M parameters"
     return out    
     
 
@@ -56,11 +56,11 @@ def get_accuracy(model, testloader, DEVICE):
         return 100 * correct / total
     
     
-def get_number_of_parameters(model:nn.Module):
+def count_parameters(model:nn.Module):
     return sum(p.numel() for p in model.parameters())
 
 
-def get_number_of_non_zero_parameters(model:nn.Module,sub:str = ""):
+def count_non_zero_parameters(model:nn.Module,sub:str = ""):
     if sub == "":
         return sum(p.to(torch.bool).sum() for p in model.parameters())
     return sum(p.to(torch.bool).sum() for p in model.get_submodule(sub).parameters())

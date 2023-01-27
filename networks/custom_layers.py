@@ -331,8 +331,6 @@ class FC_3(nn.Module):
 # implementation inspired by : https://github.com/pytorch/vision/blob/main/torchvision/models/resnet.py
 
 
-# endregion
-
 class BasicBlock(nn.Module):
     """Basic Block for ResNet"""
     def __init__(self,in_size,out_size,stride,downsample) -> None:
@@ -364,7 +362,6 @@ class BasicBlock(nn.Module):
         out += identity
         out = self.relu(out)
         return x
-    
 class ResNet18(nn.Module):
     def __init__(self) -> None:
         super().__init__()
@@ -410,5 +407,6 @@ class ResNet18(nn.Module):
         x = torch.flatten(x, 1)
         x = self.fc(x)
         return x
+# endregion
 
 #endregion
