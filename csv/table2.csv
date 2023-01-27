@@ -1,5 +1,13 @@
-Model,Training_Method,CIFAR-10,CIFAR-100,SVHN
-S-LOCAL,SGD,0%,0%,0%
-S-FC,B-lasso(B=0),0%,0%,0%
-S-FC,B-lasso(B=1),0%,0%,0%
-S-FC,B-lasso(B=50),0%,0%,0%
+Model,Training_Method,CIFAR-10,CIFAR-100,SVHN,train
+S-CONV,SGD,0%,0%,0%,true
+S-LOCAL,SGD,0%,0%,0%,true
+MLP (Neyshabur et al., 2019),SGD,0%,0%,0%,false
+MLP (Mukkamala and Hein, 2017),ADAM_RMS,0%,0%,0%,false
+MLP (Mocanu et al., 2018),SET,0%,0%,0%,false
+MLP (Urban et al., 2017),deep_conv_teacher,0%,0%,0%,false
+MLP (Lin et al., 2016),ZAE,0%,0%,0%,false
+3-FC,SGD,0%,0%,0%,true
+S-FC,SGD,0%,0%,0%,true
+S-FC,B-lasso(B=0),0%,0%,0%,true
+S-FC,B-lasso(B=10),0%,0%,0%,true
+S-FC,B-lasso(B=50),0%,0%,0%,true

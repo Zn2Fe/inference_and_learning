@@ -1,20 +1,23 @@
+# Author: Nicolas DEVAUX
+
 import torchvision
 import torchvision.transforms as transforms
 
 from typing import List
 
 #region dataset
-def get_dataset(pd_dict:dict,DATA_PATH:str):
-    params = pd_dict["dataset_params"]
+
+
+def get_dataset(des:dict,DATA_PATH:str):
     
-    if pd_dict["dataset"] == "CIFAR-10":
-            dataset = lambda train :torchvision.datasets.CIFAR10(root=DATA_PATH +'/data', train=train,  transform=get_transformer(params["transforms"]))
+    if des["name"] == "CIFAR-10":
+            dataset = lambda train :torchvision.datasets.CIFAR10(root=DATA_PATH +'/data', train=train,  transform=get_transformer(des["transforms"]))
             class_size = 10
-    elif pd_dict["dataset"] == "CIFAR-100":
-            dataset = lambda train: torchvision.datasets.CIFAR100(root=DATA_PATH +'/data', train=train,  transform=get_transformer(params["transforms"]))
+    elif des["name"] == "CIFAR-100":
+            dataset = lambda train: torchvision.datasets.CIFAR100(root=DATA_PATH +'/data', train=train,  transform=get_transformer(des["transforms"]))
             class_size = 100
-    elif pd_dict["dataset"] == "SVHN":
-            dataset = lambda train: torchvision.datasets.SVHN(root=DATA_PATH +'/data', split="train" if train else "test", transform=get_transformer(params["transforms"]))
+    elif des["name"] == "SVHN":
+            dataset = lambda train: torchvision.datasets.SVHN(root=DATA_PATH +'/data', split="train" if train else "test", transform=get_transformer(des["transforms"]))
             class_size = 10
     else :
             raise ValueError("Dataset not found")
@@ -23,6 +26,7 @@ def get_dataset(pd_dict:dict,DATA_PATH:str):
 #endregion
 
 #region transformers
+
 def get_transformer(list:List[str]):
     transformList = {
         "FastAutoAugment":transforms.autoaugment.AutoAugment(), # Fix this

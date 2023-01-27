@@ -1,13 +1,18 @@
-import torch
+#Author: Nicolas DEVAUX
 
+import torch
+import torch.nn as nn
+from typing import overload
 #region printers
 def pd_dict_to_string(pd_dict,model)->str:
-    out = f"Network: {pd_dict['model']}, {pd_dict['dataset']}, {pd_dict['optimizer']}"
-    out += f" using : {sum(p.numel() for p in model.parameters())/1000000} M parameters"
+    out = f"Network: {pd_dict['model']['name']}, {pd_dict['dataset']['name']}, {pd_dict['optimizer']['name']}"
+    out += f" using : {get_number_of_parameters(model)/1000000} M parameters"
     return out    
     
 
-def dict_printer(dict_in,o:int):
+def dict_printer(dict_in,o:int=0):
+    if len(dict_in) == 0:
+        return
     sizeMax = max([len(k) for k in dict_in.keys()])
     for k,v in dict_in.items():
         if isinstance(v,dict):
@@ -20,7 +25,9 @@ def dict_printer(dict_in,o:int):
             k = k + (sizeMax - len(k))*" " if len(k) < 20 else k
             print(o*"\t" +f"{k} : {v}")
     
-def list_printer(list_in,o):
+def list_printer(list_in,o=0):
+    if len(list_in) == 0:
+        return
     for i,v in enumerate(list_in):
         if isinstance(v,dict):
             print(o*"\t" +f"{v} :")
@@ -46,5 +53,15 @@ def get_accuracy(model, testloader, DEVICE):
                 _, predicted = torch.max(outputs.data, 1)
                 total += labels.size(0)
                 correct += (predicted == labels).sum().item()
-        return 100 * correct / total   
+        return 100 * correct / total
+    
+    
+def get_number_of_parameters(model:nn.Module):
+    return sum(p.numel() for p in model.parameters())
+
+
+def get_number_of_non_zero_parameters(model:nn.Module,sub:str = ""):
+    if sub == "":
+        return sum(p.to(torch.bool).sum() for p in model.parameters())
+    return sum(p.to(torch.bool).sum() for p in model.get_submodule(sub).parameters())
 #endregion

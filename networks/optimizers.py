@@ -1,37 +1,37 @@
-from time import sleep
+
+# Author: Nicolas DEVAUX
 import torch
 import torch.optim as optim
-
+from torch import Tensor
+from torch.optim.optimizer import Optimizer,required,_use_grad_for_differentiable
 import torch.nn as nn
 
 import networks.custom_layers as cl
 
-from torch.optim.optimizer import Optimizer,required,_use_grad_for_differentiable
-from torch import Tensor
 from typing import List, Tuple, Dict, Optional, Callable
 
 #region getters
-def get_scheduler(pd_dict:dict,optimizer:optim.Optimizer):
-    params = pd_dict["scheduler_params"]
-    if pd_dict["scheduler"] == "CosineAnnealingWarmRestarts":
+
+def get_scheduler(des:dict,optimizer:optim.Optimizer):
+    if des["name"] == "CosineAnnealingWarmRestarts":
             return optim.lr_scheduler.CosineAnnealingWarmRestarts(
                 optimizer,
-                T_0 = params["T_0"],
-                T_mult=params["T_mult"],
-                last_epoch=params["last_epoch"])
+                T_0 = des["T_0"],
+                T_mult=des["T_mult"],
+                last_epoch=des["last_epoch"])
     raise ValueError("Scheduler not found")
 
-def get_optimizer(pd_dict:dict,model:nn.Module)->optim.Optimizer:
-    p = pd_dict["optimizer_params"]
-    if pd_dict["optimizer"] == "SGD":
-            return optim.SGD(model.parameters(),lr=p["lr"],momentum=p["momentum"],weight_decay=p["weight_decay"])
-    if pd_dict["optimizer"] == "B-lasso":
+
+def get_optimizer(des:dict,model:nn.Module)->optim.Optimizer:
+    if des["name"] == "SGD":
+            return optim.SGD(model.parameters(),lr=des["lr"],momentum=des["momentum"],weight_decay=des["weight_decay"])
+    if des["name"] == "B-lasso":
             if not isinstance(model,cl.interfaceModel):
                 raise ValueError("B-lasso optimizer only works with B-lasso models")
             return B_LASSO([
-                {'params': model.conv_like.parameters(), 'l1':p["l1_coeff"],"B":p["BB"]},
-                {'params': model.FC.parameters(), 'l1':p["l1_coeff_FC"],"B":p["BB"]}
-                ],lr=p["lr"],l1=p["l1_coeff"],B=p["BB"])
+                {'params': model.conv_like.parameters(), 'l1':des["l1_coeff"],"B":des["B"]},
+                {'params': model.FC.parameters(), 'l1':des["l1_coeff_FC"],"B":des["B"]}
+                ],lr=des["lr"],l1=des["l1_coeff"],B=des["B"],foreach=True)
     
     raise ValueError("Optimizer not found")
 #endregion
@@ -42,20 +42,28 @@ def get_optimizer(pd_dict:dict,model:nn.Module)->optim.Optimizer:
 
 #region optimizers
 
-    """Implements B-lasso algorithm, based on SGD implementation.
-
-    Raises:
-        ValueError: _description_
-        ValueError: _description_
-        ValueError: _description_
-        ValueError: _description_
-        RuntimeError: _description_
-
-    Returns:
-        _type_: _description_
-    """
+# Algorithm according to : https://arxiv.org/abs/2007.13657
+# Implementation inspired by torch.optim.SGD, see https://pytorch.org/docs/stable/generated/torch.optim.SGD.html 
 class B_LASSO(Optimizer):
-    def __init__(self, params, lr=required, l1=0.0, B = 0, momentum=0, dampening=0,
+    r"""Implements B-lasso optimization algorithm.
+    
+    Args:
+        params (iterable): iterable of parameters to optimize or dicts defining
+            parameter groups
+        lr (float): learning rate
+        l1 (float): l1 regularization coefficient
+        B (float): B-lasso coefficient
+        momentum (float, optional): momentum factor (default: 0)
+        weight_decay (float, optional): weight decay (L2 penalty) (default: 0)
+        dampening (float, optional): dampening for momentum (default: 0)
+        nesterov (bool, optional): enables Nesterov momentum (default: False)
+        maximize (bool, optional): maximize the params based on the objective, instead of
+            minimizing (default: False)
+        foreach (bool, optional): whether foreach implementation of optimizer
+            is used (default: None)
+    
+    """
+    def __init__(self, params, lr=required, l1=0.0, B = 0.0, momentum=0, dampening=0,
                  weight_decay=0, nesterov=False, *, maximize=False, foreach: Optional[bool] = None,
                  differentiable=False):
         if lr is not required and lr < 0.0:
@@ -137,8 +145,6 @@ class B_LASSO(Optimizer):
 def b_lasso(params: List[Tensor],
         d_p_list: List[Tensor],
         momentum_buffer_list: List[Optional[Tensor]],
-        # kwonly args with defaults are not supported by functions compiled with torchscript issue #70627
-        # setting this as kwarg for now as functional API is compiled by torch/distributed/optim
         has_sparse_grad: bool = None,
         foreach: bool = None,
         *,
@@ -150,19 +156,17 @@ def b_lasso(params: List[Tensor],
         dampening: float,
         nesterov: bool,
         maximize: bool):
-    r"""Functional API that performs SGD algorithm computation.
-
-    See :class:`~torch.optim.SGD` for details.
+    r"""Functional API that performs B_lasso algorithm computation.
     """
 
     if foreach is None:
         # Placeholder for more complex foreach logic to be added when value is not set
         foreach = False
-
+    
     if foreach and torch.jit.is_scripting():
         raise RuntimeError('torch.jit.script not supported with foreach optimizers')
 
-    if foreach:
+    if foreach and not torch.jit.is_scripting():
         func = _multi_tensor_b_lasso
     else:
         func = _single_tensor_b_lasso
@@ -193,7 +197,6 @@ def _single_tensor_b_lasso(params: List[Tensor],
                        nesterov: bool,
                        maximize: bool,
                        has_sparse_grad: bool):
-
     for i, param in enumerate(params):
         d_p :Tensor = d_p_list[i] if not maximize else -d_p_list[i]
         # lasso specific
@@ -218,8 +221,7 @@ def _single_tensor_b_lasso(params: List[Tensor],
 
         param.add_(d_p, alpha=-lr)
         # B_lasso specific
-        param.mul_(param.sub(B*l1).heaviside(param.new_tensor([0])))
-
+        param.mul_(param.abs().sub(B*l1).heaviside(param.new_tensor([0])))
 
 def _multi_tensor_b_lasso(params: List[Tensor],
                       grads: List[Tensor],
@@ -234,7 +236,6 @@ def _multi_tensor_b_lasso(params: List[Tensor],
                       nesterov: bool,
                       maximize: bool,
                       has_sparse_grad: bool):
-
     if len(params) == 0:
         return
 
@@ -283,7 +284,7 @@ def _multi_tensor_b_lasso(params: List[Tensor],
     if not has_sparse_grad:
         torch._foreach_add_(params, grads, alpha=-lr)
         # B_lasso specific:
-        torch._foreach_mul_(params,[param.heaviside(param.new_tensor([0])) for param in torch._foreach_sub(params,B*l1)])
+        torch._foreach_mul_(params,[param.heaviside(param.new_tensor([0])) for param in torch._foreach_sub(torch._foreach_abs(params),B*l1)])
         
     else:
         # foreach APIs dont support sparse

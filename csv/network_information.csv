@@ -1,7 +1,0 @@
-use,dataset,batch_size,model,base_channel_size,training_method,learning_rate,momentum,weight_decay,use_cuda,epochs
-table2,CIFAR-10,512,S-CONV,204,SGD,0.1,0.9,0,True,4000
-table2,CIFAR-100,512,S-CONV,204,SGD,0.1,0.9,0,True,4000
-table2,SVHN,512,S-CONV,204,SGD,0.1,0.9,0,True,4000
-table2,CIFAR-10,512,S-FC,150,SGD,0.1,0.9,0,True,4000
-table2,CIFAR-100,512,S-FC,150,SGD,0.1,0.9,0,True,4000
-table2,SVHN,512,S-FC,150,SGD,0.1,0.9,0,True,4000
