@@ -29,9 +29,9 @@ def get_dataset(des:dict,DATA_PATH:str):
 
 def get_transformer(list:List[str]):
     transformList = {
+        "ToTensor":transforms.ToTensor(),
         "FastAutoAugment":transforms.autoaugment.AutoAugment(), # Fix this
-        "Normalize":transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-        "ToTensor":transforms.ToTensor()
+        "Normalize":transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     }
     return transforms.Compose([transformList[transform_name] for transform_name in list])
 

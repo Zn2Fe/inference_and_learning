@@ -39,7 +39,7 @@ class NetworkOptim:
         """
         net["epoch"] = self.epoch
         if self.verbose: print("Calculating accuracy for default parameters")
-        accuracy,_,_ = train(net,self.DATA_PATH,verbose=self.very_verbose)
+        accuracy,_,_ = train(net,self.DATA_PATH,verbose=True,very_verbose=self.very_verbose)
         best = {}
         for to_optim in ["model","dataset","optimizer","scheduler"]:
             for key,item in self.optim[to_optim][net[to_optim]["name"]].items():
@@ -59,7 +59,7 @@ class NetworkOptim:
         for item in items:
             net[key1][key2] = item
             if self.verbose: print(f"Calculating accuracy for {key1}.{key2} = {item}")
-            acc,_,_ = train(net,self.DATA_PATH,verbose=self.very_verbose)
+            acc,_,_ = train(net,self.DATA_PATH,verbose=True,very_verbose=self.very_verbose)
             if acc > accuracy:
                 accuracy = acc
                 best = item
@@ -67,7 +67,7 @@ class NetworkOptim:
         return accuracy,best
 
 # implementation according to pytorch documentation
-def train(net:dict, DATA_PATH,save_number_of_non_zero = False,verbose=False):
+def train(net:dict, DATA_PATH,save_number_of_non_zero = False,verbose=False,very_verbose=False):
     """Train a network
     
         Args:
@@ -81,7 +81,6 @@ def train(net:dict, DATA_PATH,save_number_of_non_zero = False,verbose=False):
             model (nn.Module): trained model
             number_of_non_zero (dict): number of non zero parameters for S_[CONV,LOCAL,FC]
     """ 
-    n_utils.dict_printer(net)
     #CUDA
     use_cuda = net["use_cuda"]
     if use_cuda and not torch.cuda.is_available():
@@ -111,17 +110,19 @@ def train(net:dict, DATA_PATH,save_number_of_non_zero = False,verbose=False):
     scheduler = noptim.get_scheduler(net["scheduler"],optimizer)
     
     if verbose: print(f"Training {n_utils.pd_dict_to_string(net,model)} on {DEVICE}")
+    iters = len(trainLoader)
     for epoch in range(net["epoch"]):
-        for _,(inputs,labels) in enumerate(trainLoader,0):
+        for i,(inputs,labels) in enumerate(trainLoader,0):
             inputs,labels = inputs.to(DEVICE),labels.to(DEVICE)
             optimizer.zero_grad()
             outputs = model(inputs)
             loss = criterion(outputs,labels)
             loss.backward()
             optimizer.step()
-        scheduler.step()
+            scheduler.step(epoch+ i/iters)
         if verbose:
-            print("%.2f" % n_utils.get_accuracy(model, testLoader,DEVICE),end='%, ')
+            if very_verbose : print("%.2f" % n_utils.get_accuracy(model, testLoader,DEVICE),end='%, ')
+            else : print("¤",end='')
             if(epoch % 10 == 10-1) : print(f' : {epoch+1}/{net["epoch"]}')
             elif(epoch == net["epoch"]-1): print(f' : {epoch+1}/{net["epoch"]}')
         if save_number_of_non_zero:
