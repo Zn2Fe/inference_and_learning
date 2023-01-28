@@ -19,7 +19,7 @@ def get_scheduler(des:dict,optimizer:optim.Optimizer):
                 T_0 = des["T_0"],
                 T_mult=des["T_mult"],
                 last_epoch=des["last_epoch"])
-    raise ValueError("Scheduler not found")
+    raise ValueError(f"Scheduler not found :{des['name']} ")
 
 
 def get_optimizer(des:dict,model:nn.Module)->optim.Optimizer:
@@ -32,8 +32,8 @@ def get_optimizer(des:dict,model:nn.Module)->optim.Optimizer:
                 {'params': model.conv_like.parameters(), 'l1':des["l1_coeff"],"B":des["B"]},
                 {'params': model.FC.parameters(), 'l1':des["l1_coeff_FC"],"B":des["B"]}
                 ],lr=des["lr"],l1=des["l1_coeff"],B=des["B"],foreach=True)
-    
-    raise ValueError("Optimizer not found")
+   
+    raise ValueError(f"Optimizer not found :{des['name']} ")
 #endregion
 
 #region scheduler

@@ -1,10 +1,11 @@
 # Author: Nicolas DEVAUX
 
 import torch
+import torchvision
 from torch import Tensor
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Tuple,List,Type,OrderedDict,overload
+from typing import Tuple,List,Type,OrderedDict,Optional,Callable
 
 def get_model(des:dict,image_size,out_size):
     if des["name"] in ["D-CONV","D-FC","D-LOCAL","S-CONV","S-FC","S-LOCAL"]:
@@ -13,8 +14,10 @@ def get_model(des:dict,image_size,out_size):
         ll = {"D":D_Conv,"S":S_Conv}[lm]
         return ll(des["alpha"],cl,image_size,out_size,dropout_1=des["dropout_1"],dropout_2=des["dropout_2"])
     if des["name"] == "3-FC":
-        return FC_3(des["alpha"],image_size,out_size)
-    raise ValueError("Model not found")
+        return FC_3(des["alpha"],image_size,out_size,dropout_1=des["dropout_1"],dropout_2=des["dropout_2"])
+    if des["name"] == "MLP1":
+        return MLP(3,image_size,[des["alpha"],des["alpha"]],out_size)
+    raise ValueError(f"Model not found : {des['name']}")
 
 
 #region DataViewLayers
@@ -300,27 +303,37 @@ class FC_3(nn.Module):
     """Fully Connected Network with 2 hidden layers
     
     Args:
-        alpha (int): base channel size (size of hidden layers)
+        base_size (int): base channel size (size of hidden layers)
         image_size (int): size of the image
         out_size (int, optional): number of output classes. Defaults to 10.
         
     """
     def __init__(
         self,
-        alpha :int,
+        base_size :int,
         image_size :int,
-        out_size = 10
+        out_size = 10,
+        dropout_1 = 0,
+        dropout_2 = 0
         ) -> None:
         super().__init__()
-        self.FC = nn.Sequential(
+        alpha = base_size * image_size**2
+        modules = [
             nn.Linear(image_size*image_size*3,alpha).half(),
             tofloat32(nn.BatchNorm1d(alpha,dtype=torch.float32)),
             nn.ReLU(),
-            nn.Linear(alpha,alpha).half(),
+            nn.Linear(alpha,alpha).half()
+        ]
+        if dropout_1 != 0:
+            modules.append(nn.Dropout(dropout_1))
+        modules.extend([
             tofloat32(nn.BatchNorm1d(alpha,dtype=torch.float32)),
             nn.ReLU(),
             nn.Linear(alpha,out_size).half()
-        )
+        ])
+        if dropout_2 != 0:
+            modules.append(nn.Dropout(dropout_2))
+        self.FC = nn.Sequential(*modules)
     def forward(self, x:torch.Tensor) -> torch.Tensor:
         x = torch.flatten(x,1)
         x = self.FC(x)
@@ -408,5 +421,13 @@ class ResNet18(nn.Module):
         x = self.fc(x)
         return x
 # endregion
+class MLP(torchvision.ops.MLP):
+    def __init__(self, in_channels: int,image_size:int, alphas: List[int],out_size, norm_layer: Optional[Callable[..., torch.nn.Module]] = None, activation_layer: Optional[Callable[..., torch.nn.Module]] = torch.nn.ReLU, inplace: Optional[bool] = True, bias: bool = True, dropout: float = 0):
+        in_c = in_channels * image_size * image_size
+        hidden_channels = [a*image_size**2 for a in alphas] + [out_size*image_size**2]
+        super().__init__(in_c, hidden_channels, norm_layer, activation_layer, inplace, bias, dropout)
 
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = torch.flatten(x, 1)
+        return super().forward(x)
 #endregion

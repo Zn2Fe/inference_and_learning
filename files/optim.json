@@ -30,6 +30,16 @@
                     0,
                     0.5
                 ]
+            },
+            "3-FC": {
+                "dropout_1": [
+                    0,
+                    0.5
+                ],
+                "dropout_2": [
+                    0,
+                    0.5
+                ]
             }
         },
         "dataset": {
@@ -64,8 +74,8 @@
             "CosineAnnealingWarmRestarts": {}
         }
     },
-    "networks": {  
-        "S-CONV_SGD_CIFAR-10" :{
+    "networks": {
+        "S-CONV_SGD_CIFAR-10": {
             "batch_size": 512,
             "epoch": 4000,
             "use_cuda": true,
@@ -78,10 +88,7 @@
             "dataset": {
                 "name": "CIFAR-10",
                 "transforms": [
-                     "ToTensor"
-                     
-                     
-                     
+                    "ToTensor"
                 ]
             },
             "model": {
@@ -98,7 +105,7 @@
                 "last_epoch": -1
             }
         },
-        "S-CONV_SGD_CIFAR-100" :{
+        "S-CONV_SGD_CIFAR-100": {
             "batch_size": 512,
             "epoch": 4000,
             "use_cuda": true,
@@ -111,10 +118,7 @@
             "dataset": {
                 "name": "CIFAR-100",
                 "transforms": [
-                     "ToTensor"
-                     
-                     
-                     
+                    "ToTensor"
                 ]
             },
             "model": {
@@ -131,7 +135,7 @@
                 "last_epoch": -1
             }
         },
-        "S-CONV_SGD_SVHN" :{
+        "S-CONV_SGD_SVHN": {
             "batch_size": 512,
             "epoch": 4000,
             "use_cuda": true,
@@ -144,10 +148,7 @@
             "dataset": {
                 "name": "SVHN",
                 "transforms": [
-                     "ToTensor"
-                     
-                     
-                     
+                    "ToTensor"
                 ]
             },
             "model": {
@@ -164,8 +165,7 @@
                 "last_epoch": -1
             }
         },
-        
-        "S-LOCAL_SGD_CIFAR-10" :{
+        "S-LOCAL_SGD_CIFAR-10": {
             "batch_size": 512,
             "epoch": 4000,
             "use_cuda": true,
@@ -178,10 +178,7 @@
             "dataset": {
                 "name": "CIFAR-10",
                 "transforms": [
-                     "ToTensor"
-                     
-                     
-                     
+                    "ToTensor"
                 ]
             },
             "model": {
@@ -198,7 +195,7 @@
                 "last_epoch": -1
             }
         },
-        "S-LOCAL_SGD_CIFAR-100" :{
+        "S-LOCAL_SGD_CIFAR-100": {
             "batch_size": 512,
             "epoch": 4000,
             "use_cuda": true,
@@ -211,10 +208,7 @@
             "dataset": {
                 "name": "CIFAR-100",
                 "transforms": [
-                     "ToTensor"
-                     
-                     
-                     
+                    "ToTensor"
                 ]
             },
             "model": {
@@ -231,7 +225,7 @@
                 "last_epoch": -1
             }
         },
-        "S-LOCAL_SGD_SVHN" :{
+        "S-LOCAL_SGD_SVHN": {
             "batch_size": 512,
             "epoch": 4000,
             "use_cuda": true,
@@ -244,10 +238,7 @@
             "dataset": {
                 "name": "SVHN",
                 "transforms": [
-                     "ToTensor"
-                     
-                     
-                     
+                    "ToTensor"
                 ]
             },
             "model": {
@@ -264,8 +255,7 @@
                 "last_epoch": -1
             }
         },
-
-        "3-FC_SGD_CIFAR-10" :{
+        "3-FC_SGD_CIFAR-10": {
             "batch_size": 512,
             "epoch": 4000,
             "use_cuda": true,
@@ -278,15 +268,12 @@
             "dataset": {
                 "name": "CIFAR-10",
                 "transforms": [
-                     "ToTensor"
-                     
-                     
-                     
+                    "ToTensor"
                 ]
             },
             "model": {
                 "name": "3-FC",
-                "alpha": 160,
+                "alpha": 14,
                 "dropout_1": 0,
                 "dropout_2": 0
             },
@@ -298,7 +285,7 @@
                 "last_epoch": -1
             }
         },
-        "3-FC_SGD_CIFAR-100" :{
+        "3-FC_SGD_CIFAR-100": {
             "batch_size": 512,
             "epoch": 4000,
             "use_cuda": true,
@@ -311,15 +298,12 @@
             "dataset": {
                 "name": "CIFAR-100",
                 "transforms": [
-                     "ToTensor"
-                     
-                     
-                     
+                    "ToTensor"
                 ]
             },
             "model": {
                 "name": "3-FC",
-                "alpha": 160,
+                "alpha": 14,
                 "dropout_1": 0,
                 "dropout_2": 0
             },
@@ -331,7 +315,7 @@
                 "last_epoch": -1
             }
         },
-        "3-FC_SGD_SVHN" :{
+        "3-FC_SGD_SVHN": {
             "batch_size": 512,
             "epoch": 4000,
             "use_cuda": true,
@@ -344,15 +328,12 @@
             "dataset": {
                 "name": "SVHN",
                 "transforms": [
-                     "ToTensor"
-                     
-                     
-                     
+                    "ToTensor"
                 ]
             },
             "model": {
                 "name": "3-FC",
-                "alpha": 160,
+                "alpha": 14,
                 "dropout_1": 0,
                 "dropout_2": 0
             },
@@ -364,8 +345,7 @@
                 "last_epoch": -1
             }
         },
-
-        "S-FC_SGD_CIFAR-10" :{
+        "S-FC_SGD_CIFAR-10": {
             "batch_size": 512,
             "epoch": 4000,
             "use_cuda": true,
@@ -378,10 +358,7 @@
             "dataset": {
                 "name": "CIFAR-10",
                 "transforms": [
-                     "ToTensor"
-                     
-                     
-                     
+                    "ToTensor"
                 ]
             },
             "model": {
@@ -398,7 +375,7 @@
                 "last_epoch": -1
             }
         },
-        "S-FC_SGD_CIFAR-100" :{
+        "S-FC_SGD_CIFAR-100": {
             "batch_size": 512,
             "epoch": 4000,
             "use_cuda": true,
@@ -411,10 +388,7 @@
             "dataset": {
                 "name": "CIFAR-100",
                 "transforms": [
-                     "ToTensor"
-                     
-                     
-                     
+                    "ToTensor"
                 ]
             },
             "model": {
@@ -431,7 +405,7 @@
                 "last_epoch": -1
             }
         },
-        "S-FC_SGD_SVHN" :{
+        "S-FC_SGD_SVHN": {
             "batch_size": 512,
             "epoch": 4000,
             "use_cuda": true,
@@ -444,10 +418,7 @@
             "dataset": {
                 "name": "SVHN",
                 "transforms": [
-                     "ToTensor"
-                     
-                     
-                     
+                    "ToTensor"
                 ]
             },
             "model": {
@@ -464,213 +435,6 @@
                 "last_epoch": -1
             }
         },
-
-        "S-FC_B-lasso(B=0)_CIFAR-10":   {
-            "batch_size": 512,
-            "epoch": 4000,
-            "use_cuda": true,
-            "optimizer": {
-                "name": "B-lasso",
-                "lr": 0.1,
-                "B": 0,
-                "l1_coeff": 0.000001,
-                "l1_coeff_FC": 0.00002
-            },
-            "dataset": {
-                "name": "CIFAR-10",
-                "transforms": [
-                     "ToTensor"
-                     
-                     
-                     
-                ]
-            },
-            "model": {
-                "name": "S-FC",
-                "alpha": 160,
-                "dropout_1": 0,
-                "dropout_2": 0
-            },
-            "scheduler": {
-                "name": "CosineAnnealingWarmRestarts",
-                "T_0": 20,
-                "T_mult": 2,
-                "eta_min": 0,
-                "last_epoch": -1
-            }
-        },
-        "S-FC_B-lasso(B=0)_CIFAR-100":   {
-            "batch_size": 512,
-            "epoch": 4000,
-            "use_cuda": true,
-            "optimizer": {
-                "name": "B-lasso",
-                "lr": 0.1,
-                "B": 0,
-                "l1_coeff": 0.000001,
-                "l1_coeff_FC": 0.00002
-            },
-            "dataset": {
-                "name": "CIFAR-100",
-                "transforms": [
-                     "ToTensor"
-                     
-                     
-                     
-                ]
-            },
-            "model": {
-                "name": "S-FC",
-                "alpha": 160,
-                "dropout_1": 0,
-                "dropout_2": 0
-            },
-            "scheduler": {
-                "name": "CosineAnnealingWarmRestarts",
-                "T_0": 20,
-                "T_mult": 2,
-                "eta_min": 0,
-                "last_epoch": -1
-            }
-        },
-        "S-FC_B-lasso(B=0)_SVHN":   {
-            "batch_size": 512,
-            "epoch": 4000,
-            "use_cuda": true,
-            "optimizer": {
-                "name": "B-lasso",
-                "lr": 0.1,
-                "B": 0,
-                "l1_coeff": 0.000001,
-                "l1_coeff_FC": 0.00002
-            },
-            "dataset": {
-                "name": "SVHN",
-                "transforms": [
-                     "ToTensor"
-                     
-                     
-                     
-                ]
-            },
-            "model": {
-                "name": "S-FC",
-                "alpha": 160,
-                "dropout_1": 0,
-                "dropout_2": 0
-            },
-            "scheduler": {
-                "name": "CosineAnnealingWarmRestarts",
-                "T_0": 20,
-                "T_mult": 2,
-                "eta_min": 0,
-                "last_epoch": -1
-            }
-        },
-
-        "S-FC_B-lasso(B=10)_CIFAR-10":   {
-            "batch_size": 512,
-            "epoch": 4000,
-            "use_cuda": true,
-            "optimizer": {
-                "name": "B-lasso",
-                "lr": 0.1,
-                "B": 10,
-                "l1_coeff": 0.000001,
-                "l1_coeff_FC": 0.00002
-            },
-            "dataset": {
-                "name": "CIFAR-10",
-                "transforms": [
-                     "ToTensor"
-                     
-                     
-                     
-                ]
-            },
-            "model": {
-                "name": "S-FC",
-                "alpha": 160,
-                "dropout_1": 0,
-                "dropout_2": 0
-            },
-            "scheduler": {
-                "name": "CosineAnnealingWarmRestarts",
-                "T_0": 20,
-                "T_mult": 2,
-                "eta_min": 0,
-                "last_epoch": -1
-            }
-        },
-        "S-FC_B-lasso(B=10)_CIFAR-100":   {
-            "batch_size": 512,
-            "epoch": 4000,
-            "use_cuda": true,
-            "optimizer": {
-                "name": "B-lasso",
-                "lr": 0.1,
-                "B": 10,
-                "l1_coeff": 0.000001,
-                "l1_coeff_FC": 0.00002
-            },
-            "dataset": {
-                "name": "CIFAR-100",
-                "transforms": [
-                     "ToTensor"
-                     
-                     
-                     
-                ]
-            },
-            "model": {
-                "name": "S-FC",
-                "alpha": 160,
-                "dropout_1": 0,
-                "dropout_2": 0
-            },
-            "scheduler": {
-                "name": "CosineAnnealingWarmRestarts",
-                "T_0": 20,
-                "T_mult": 2,
-                "eta_min": 0,
-                "last_epoch": -1
-            }
-        },
-        "S-FC_B-lasso(B=10)_SVHN":   {
-            "batch_size": 512,
-            "epoch": 4000,
-            "use_cuda": true,
-            "optimizer": {
-                "name": "B-lasso",
-                "lr": 0.1,
-                "B": 10,
-                "l1_coeff": 0.000001,
-                "l1_coeff_FC": 0.00002
-            },
-            "dataset": {
-                "name": "SVHN",
-                "transforms": [
-                     "ToTensor"
-                     
-                     
-                     
-                ]
-            },
-            "model": {
-                "name": "S-FC",
-                "alpha": 160,
-                "dropout_1": 0,
-                "dropout_2": 0
-            },
-            "scheduler": {
-                "name": "CosineAnnealingWarmRestarts",
-                "T_0": 20,
-                "T_mult": 2,
-                "eta_min": 0,
-                "last_epoch": -1
-            }
-        },
-        
         "S-FC_B-lasso(B=50)_CIFAR-10": {
             "batch_size": 512,
             "epoch": 4000,
@@ -685,10 +449,7 @@
             "dataset": {
                 "name": "CIFAR-10",
                 "transforms": [
-                     "ToTensor"
-                     
-                     
-                     
+                    "ToTensor"
                 ]
             },
             "model": {
@@ -705,7 +466,7 @@
                 "last_epoch": -1
             }
         },
-        "S-FC_B-lasso(B=50)_CIFAR-100":{
+        "S-FC_B-lasso(B=50)_CIFAR-100": {
             "batch_size": 512,
             "epoch": 4000,
             "use_cuda": true,
@@ -736,7 +497,7 @@
                 "last_epoch": -1
             }
         },
-        "S-FC_B-lasso(B=50)_SVHN":{
+        "S-FC_B-lasso(B=50)_SVHN": {
             "batch_size": 512,
             "epoch": 4000,
             "use_cuda": true,
@@ -750,10 +511,7 @@
             "dataset": {
                 "name": "SVHN",
                 "transforms": [
-                     "ToTensor"
-                     
-                     
-                     
+                    "ToTensor"
                 ]
             },
             "model": {
@@ -770,7 +528,6 @@
                 "last_epoch": -1
             }
         }
-
     },
     "results": {
         "S-FC_B-lasso(B=0)_CIFAR-10": {
@@ -805,9 +562,59 @@
             },
             "accuracy": 75
         },
-        "S-CONV_SGD_CIFAR-10_1":{
-            "best": {"model.dropout_1": 0, "model.dropout_2": 0, "optimizer.momentum": 0.9, "optimizer.weight_decay": 0.001},
+        "S-CONV_SGD_CIFAR-10": {
+            "best": {
+                "model.dropout_1": 0,
+                "model.dropout_2": 0,
+                "optimizer.momentum": 0.9,
+                "optimizer.weight_decay": 0.001
+            },
             "accuracy": 69.16
+        },
+        "S-CONV_SGD_CIFAR-100": {
+            "best": {
+                "model.dropout_1": 0,
+                "model.dropout_2": 0,
+                "optimizer.momentum": 0.9,
+                "optimizer.weight_decay": 0.0001
+            },
+            "accuracy": 38.99
+        },
+        "S-CONV_SGD_SVHN": {
+            "best": {
+                "model.dropout_1": 0.5,
+                "model.dropout_2": 0,
+                "optimizer.momentum": 0.9,
+                "optimizer.weight_decay": 0.0002
+            },
+            "accuracy": 87.36170866625692
+        },
+        "3-FC_SGD_CIFAR-100" : {
+            "best": {
+                "model.dropout_1": 0,
+                "model.dropout_2": 0,
+                "optimizer.momentum": 0,
+                "optimizer.weight_decay": 0.0005
+            },
+            "accuracy": 31.4
+        },
+        "S-FC_SGD_CIFAR-100" : {
+            "best": {
+                "model.dropout_1": 0,
+                "model.dropout_2": 0,
+                "optimizer.momentum": 0.9,
+                "optimizer.weight_decay": 0.0001
+            },
+            "accuracy": 32.25
+        },
+        "S-FC_SGD_CIFAR-10" : {
+            "best": {
+                "model.dropout_1": 0.5,
+                "model.dropout_2": 0,
+                "optimizer.momentum": 0.9,
+                "optimizer.weight_decay": 0
+            },
+            "accuracy": 59.57
         }
     }
 }

@@ -20,7 +20,7 @@ def get_dataset(des:dict,DATA_PATH:str):
             dataset = lambda train: torchvision.datasets.SVHN(root=DATA_PATH +'/data', split="train" if train else "test", transform=get_transformer(des["transforms"]))
             class_size = 10
     else :
-            raise ValueError("Dataset not found")
+            raise ValueError(f"Dataset not found : {des['name']}")
     return class_size,dataset(True),dataset(False)
 
 #endregion
