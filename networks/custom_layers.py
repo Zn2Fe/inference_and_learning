@@ -158,15 +158,17 @@ class FC_custom(nn.Module,interfaceModule):
         super(FC_custom, self).__init__()
         self.size_out = size_out
         self.im_out = image_size//stride
-
-        self.v1 =  view_custom([-1,image_size*image_size*size_in])
-        self.FC = nn.Linear(size_in * image_size**2,size_out * (image_size//stride)**2).half()
-        self.batch = tofloat32(nn.BatchNorm1d(size_out * (image_size//stride)**2,dtype = torch.float32))
-        self.v2 = view_custom([-1,size_out,image_size//stride,image_size//stride])
+        self.stride = stride
+        
+        self.FC = nn.Linear(size_in * image_size**2,size_out * self.im_out**2).half()
+        #self.FC = nn.Linear(size_in * self.im_out**2,size_out * self.im_out**2).half()
+        self.batch = tofloat32(nn.BatchNorm1d(size_out * self.im_out**2,dtype = torch.float32))
+        self.v2 = view_custom([-1,size_out,self.im_out,self.im_out])
         self.relu = nn.ReLU()
     
-    def forward(self, x):
-        x = self.v1(x)
+    def forward(self, x:torch.Tensor):
+        #x = x.unfold(2,1,self.stride).unfold(3,1,self.stride).flatten(3)
+        x = x.view(x.shape[0],-1) # reshape
         x = self.FC(x)
         x = self.batch(x)
         x = self.v2(x)

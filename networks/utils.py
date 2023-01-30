@@ -2,7 +2,7 @@
 
 import torch
 import torch.nn as nn
-from typing import overload
+import json
 #region printers (for debug)
 def pd_dict_to_string(pd_dict,model)->str:
     out = f"Network: {pd_dict['model']['name']}, {pd_dict['dataset']['name']}, {pd_dict['optimizer']['name']}"
@@ -87,4 +87,6 @@ def count_non_zero_parameters(model:nn.Module,sub:str = ""):
     if sub == "":
         return sum(p.to(torch.bool).sum() for p in model.parameters())
     return sum(p.to(torch.bool).sum() for p in model.get_submodule(sub).parameters())
+
+ 
 #endregion

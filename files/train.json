@@ -18,7 +18,7 @@
         },
         "model":{
             "name":"S-CONV",
-            "alpha": 204,
+            "alpha": 150,
             "dropout_1": 0,
             "dropout_2": 0
         },
@@ -43,7 +43,7 @@
             "weight_decay":0.0001
         },
         "dataset":{
-            "name":"CIFAR-10",
+            "name":"CIFAR-100",
             "transforms":[
                 "ToTensor"
             ]
@@ -75,7 +75,7 @@
             "weight_decay":0.0002
         },
         "dataset":{
-            "name":"CIFAR-10",
+            "name":"SVHN",
             "transforms":[
                 "ToTensor"
             ]
