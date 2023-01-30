@@ -346,13 +346,32 @@ class ThreadedTrainer(Thread):
             infos = [self._to_str(call(i)) for i in self.trainer.threads]
             return " | ".join([i.center(self.line_size) for i in infos])
         
-        def get_warning(self):
+        def _get_warning(self):
             if len(self.warning) == 0:
                 return ""
             return "WARNING !!! :\n" + "\n".join(self.warning) + "\n\n\n"
-
-
-        def get_result(self) -> str:
+        def _get_task_remaining(self) -> str:
+            a = f"{len(self.trainer.queue)} tasks remaining\n" 
+            
+            l = [str(i+1)+". " + x[0] for i,x in enumerate(self.trainer.queue)]
+            ml = max([len(i) for i in l])
+            for i in range(len(l)//2):
+                a += "\t" + l[i] 
+                a += " "*(ml-len(l[i])+10)
+                a +=  l[len(l)//2 + i + len(l)%2]+"\n"
+            if len(l)%2 == 1:
+                a += "\t" + l[len(l)//2] + "\n"             
+            return a
+        def _get_general_info(self) -> str:
+            a = ""
+            a += f"Accuracy updated every {self.trainer.acc_update} epochs\n"
+            if torch.cuda.is_available():
+                available,total = torch.cuda.mem_get_info()
+                max_usage = torch.cuda.max_memory_allocated()
+                a+= "GPU available: "+ self._to_str(available/1e9) + "GB out of " + self._to_str(total/1e9) + "GB\n"
+                a+= "GPU max usage: "+ self._to_str(max_usage/1e9) + "GB out of " + self._to_str(total/1e9) + "GB\n"
+            return a
+        def _get_result(self) -> str:
             
             a = "     Model     |   Optimizer   |    Dataset    ||    optimization_parameters   ||    accuracy   \n"
             a+= "---------------|---------------|---------------||------------------------------||---------------\n"
@@ -364,25 +383,12 @@ class ThreadedTrainer(Thread):
                 param = data[3] if len(data) == 4 else "¤"
                 a += f"{model.center(15)}|{opt.center(15)}|{dataset.center(15)}||"
                 a += f"{param.center(30)}||"+self._to_str(item).center(15)+"\n"
-            a+= "\n\n"
-            return a
-        
-        def get_epoch_line(self)->str:    
-            return "Epoch     || " + self._line(lambda x : x.epoch) + " ||\r"
-                 
-        def __str__(self):
-            a = self.get_warning()
-            a += f"{len(self.trainer.queue)} tasks remaining\n" 
-            a += f"Accuracy updated every {self.trainer.acc_update} epochs\n"
-            if torch.cuda.is_available():
-                available,total = torch.cuda.mem_get_info()
-                max_usage = torch.cuda.max_memory_allocated()
-                a+= "GPU available: "+ self._to_str(available/1e9) + "GB out of " + self._to_str(total/1e9) + "GB\n"
-                a+= "GPU max usage: "+ self._to_str(max_usage/1e9) + "GB out of " + self._to_str(total/1e9) + "GB\n"
-            a+= "\n\n"
-            
-            a+= self.get_result() 
-            
+
+            return a        
+        def _get_epoch_line(self)->str:    
+            return "Epoch     || " + self._line(lambda x : x.epoch) + " ||\r"       
+        def _get_thread(self)->str:
+            a = ""
             a+= "Thread    || " + self._line_center(lambda x: x.name)                               + " ||\n"
             a+= "----------||-" + "-|-".join(["-"*self.line_size for i in self.trainer.threads])    + "-||\n"
             a+= "Model     || " + self._line(lambda x: x.info["model"])                             + " ||\n"
@@ -395,7 +401,18 @@ class ThreadedTrainer(Thread):
             a+= "Accuracy  || " + self._line2(
                 lambda x :(self._to_str(x.info["last_update"]) + ":" ,
                            self._to_str(x.info["accuracy"])+"%"))                                   + " ||\n"
-            a+= self.get_epoch_line()
+            return a
+                 
+        def __str__(self):
+            a = self._get_warning()
+            a += self._get_task_remaining()
+            a += "\n\n"
+            a += self._get_general_info()
+            a += "\n\n"
+            a += self._get_result() 
+            a += "\n\n"
+            a += self._get_thread()
+            a += self._get_epoch_line()
             return a
 
         def big_update(self):
@@ -417,7 +434,7 @@ class ThreadedTrainer(Thread):
                     self._print()  
                     self._big_update.clear()
                 else :
-                    print(self.get_epoch_line(),end="")
+                    print(self._get_epoch_line(),end="")
                 self._update.clear()
                 sleep(0.1)
             
