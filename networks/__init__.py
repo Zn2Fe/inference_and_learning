@@ -36,34 +36,42 @@ class ThreadedTrainer(Thread):
                  line_size = 11,acc_update=100) -> None:
         super().__init__(name="ThreadedTrainer")
         
-        #Handlers
+        #region Handlers
         self.logger: ThreadedTrainer.Logger
-        self.non_zero_saver : ThreadedTrainer.NonZeroSaver
-        
-        #Internal list and lock
+        #endregion
+        #region Internal list and lock
         self._lock = Lock()
         self.threads:List[ThreadedTrainer.Trainers] = []
         self.queue = []
         self.results = {}
-        
-        # CONSTANTS
-        self.acc_update = acc_update
-        
-        #Events
+        self._non_zero = {}
+        self._incomplete = {}
+        #endregion
+        #region Events
         self._kill = Event()
         self._available = Event()
         self.done = Event()
-        
-        #Paths
+        #endregion
+        #region CONSTANTS
+        self.acc_update = acc_update
         self.DATA_PATH = DATA_PATH
-        self.SAVE_RESULTS_PATH = SAVE_RESULT_PATH
+        self.SAVE_NON_ZERO = SAVE_NON_ZERO
         self.SAVE_NETWORK_PATH = SAVE_NETWORK_PATH
-        
-        # init
+        self.SAVE_RESULT_PATH = SAVE_RESULT_PATH
+        #endregion
+        #region init
         self.logger = ThreadedTrainer.Logger(self,line_size)
-        self.non_zero_saver = ThreadedTrainer.NonZeroSaver(SAVE_NON_ZERO)
         self.threads = [ThreadedTrainer.Trainers(self,"Trainer-" +str(i)) for i in range(num_threads)]
-                
+        with open(self.SAVE_RESULT_PATH,"r") as f:
+            self.results = json.load(f)
+        with open(self.SAVE_NETWORK_PATH+".INCOMPLETE.json","r") as f:
+            self._incomplete = json.load(f)
+        with open(self.SAVE_NON_ZERO,"r") as f:
+            self._non_zero = json.load(f)
+        #endregion
+        self.start()
+        
+    #region thread methods            
     def _get_next_in_queue(self) -> Union[Tuple[str,dict,bool], None]:
         print("get_next_in_queue")
         if self._kill.is_set():
@@ -75,24 +83,59 @@ class ThreadedTrainer(Thread):
             if len(self.queue) == 0:
                 self._available.clear()
                 return None
-            return self.queue.pop(0)
-        
-    def _add_results(self,key,res):
-        with self._lock:
-            self.results[key] = res
-    
+            return self.queue.pop(0)   
     def _error(self,thread_name,buff: Union[Tuple[str,dict,bool],None],error):
         if buff is not None:
             self.add(*buff)
         self.logger.warning.append(f"{thread_name} error : {error}")
+    #endregion
     
-    def _save(self):
-        with open(self.SAVE_RESULTS_PATH,"r+") as file:
-            file_data:dict = json.load(file)
-            file_data.update(self.results)
-            file.seek(0)
-            json.dump(self.results,file)
+    #region network access methods
+    def _get_network(self,key:str,model:nn.Module,optimizer:torch.optim.Optimizer) -> int:
+        if key in self._incomplete:
+            model.load_state_dict(torch.load(self.SAVE_NETWORK_PATH+f".{key}_INCOMPLETE.pth"))
+            optimizer.load_state_dict(torch.load(self.SAVE_NETWORK_PATH+f".{key}_OPTIM_INCOMPLETE.pth"))
+            return self._incomplete[key]
+        return 0
+    def _save_incomplete(self,key:str,model:nn.Module,optimizer:torch.optim.Optimizer,epoch:int):
+        torch.save(model.state_dict(),self.SAVE_NETWORK_PATH+f".{key}_INCOMPLETE.pth")
+        torch.save(optimizer.state_dict(),self.SAVE_NETWORK_PATH+f".{key}_OPTIM_INCOMPLETE.pth")
+        with self._lock:
+            self._incomplete[key] = epoch
+            with open(self.SAVE_NETWORK_PATH+".INCOMPLETE.json","w") as f:
+                json.dump(self._incomplete,f,indent=4)
+    def _save(self,key:str,model:nn.Module,accuracy:float):
+        torch.save(model.state_dict(),self.SAVE_NETWORK_PATH+f"{key}.pth")       
+        with self._lock:
+            self.results[key] = accuracy
+            self._incomplete.pop(key,None)
+            with open(self.SAVE_RESULT_PATH,"w") as f:
+                json.dump(self.results,f,indent=4)
+            with open(self.SAVE_NETWORK_PATH+".INCOMPLETE.json",) as f:
+                json.dump(self._incomplete,f,indent=4)
+        os.remove(self.SAVE_NETWORK_PATH+f".{key}_INCOMPLETE.pth")
+        os.remove(self.SAVE_NETWORK_PATH+f".{key}_OPTIM_INCOMPLETE.pth")
+    #endregion
     
+    #region non zero access methods
+    def _add_non_zero(self,key:str,model:nn.Module):
+        with self._lock:
+            if not key in self._non_zero:
+                self._non_zero[key] = {
+                    "conv_like":[],
+                    "FC1":[],
+                    "FC2":[]
+                }
+        self._non_zero[key]["conv_like"].append(n_utils.count_non_zero_parameters(model,"conv_like"))
+        self._non_zero[key]["FC1"].append(n_utils.count_non_zero_parameters(model,"FC.0"))
+        self._non_zero[key]["FC2"].append(n_utils.count_non_zero_parameters(model,"FC.3"))
+    def _save_non_zero(self):
+        with self._lock:
+            with open(self.SAVE_NON_ZERO,"w") as f:
+                json.dump(self._non_zero,f,indent=4)
+    #endregion
+    
+    #region public methods     
     def add(self,key,net,non_zero=False):
         with self._lock:
             if key in [k for k,_,_ in self.queue]:
@@ -103,17 +146,13 @@ class ThreadedTrainer(Thread):
             self.queue.append((key,net,non_zero))
         self._available.set()
         self.done.clear()
-    
     def clear(self):
         with self._lock:
             self.queue.clear()
-            self._save()
             self.results.clear()
-    
     def stop(self):
         self._kill.set()
         self._available.set()
-    
     def run(self):
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
@@ -123,21 +162,20 @@ class ThreadedTrainer(Thread):
         for t in self.threads:
             t.join()
         self.logger.join()
-        self._save()
+    #endregion
+    
+    #region inner classes
     class Trainers(Thread):
         def __init__(self,parent,name:Union[str,None] = None) -> None:
             super().__init__(name=name)
             self.parent :ThreadedTrainer = parent
-            
             #runtime info
             self.epoch = 0
             self.info :Dict[str,Any] = {"acc_update":str(self.parent.acc_update)}
             self._done = Event()
-
-            #constants
-            self.DATA_PATH = parent.DATA_PATH
-            self.SAVE_NETWORK_PATH = parent.SAVE_NETWORK_PATH
-            
+            #region CONSTANTS
+            self.DATA_PATH = self.parent.DATA_PATH
+            #endregion
             #init 
             self._set_info_default()
                
@@ -165,12 +203,13 @@ class ThreadedTrainer(Thread):
                 if not t._done.is_set():
                     return
             self.parent.done.set()
-        
-        def _train(self,key,net,non_zero) -> float:
+
+        def _train(self,key,net,non_zero):
             self._set_info("key",key)
-            start = 0
+            #region DEVICE
             self._set_info("device","cuda" if net["use_cuda"] and torch.cuda.is_available() else "cpu")
             DEVICE = torch.device(self.info["device"])
+            #endregion
             
             #region DataSets
             class_size,trainset,testset = dset.get_dataset(net["dataset"],self.DATA_PATH)
@@ -180,12 +219,9 @@ class ThreadedTrainer(Thread):
             #endregion
             
             #region Model
-            model :nn.Module
-            model = cl.get_model(net["model"],trainset[0][0].shape[1],class_size).to(DEVICE)
+            model :nn.Module = cl.get_model(net["model"],trainset[0][0].shape[1],class_size).to(DEVICE)
             self._set_info("size",str(n_utils.count_parameters(model)/1e6)[:6] + " M")
-            self._set_info("model",net["model"]["name"])
-            
-            self.parent.non_zero_saver.register(key,non_zero)
+            self._set_info("model",net["model"]["name"])     
             #endregion
             
             #region Training method
@@ -193,16 +229,10 @@ class ThreadedTrainer(Thread):
             optimizer = noptim.get_optimizer(net["optimizer"],model)       
             scheduler = noptim.get_scheduler(net["scheduler"],optimizer)
             self._set_info("optimizer", net["optimizer"]["name"])
-    
             #endregion
             
             #region Recover
-            with open(self.SAVE_NETWORK_PATH+f".INCOMPLETE.json","r") as file:
-                data = json.load(file)
-                if key in data:
-                    model.load_state_dict(torch.load(self.SAVE_NETWORK_PATH+f".{key}_INCOMPLETE.pth"))
-                    optimizer.load_state_dict(torch.load(self.SAVE_NETWORK_PATH+f".{key}_OPTIM_INCOMPLETE.pth"))
-                    start = data[key]
+            start = self.parent._get_network(key,model,optimizer)
             #endregion
             
             #region Training
@@ -210,10 +240,11 @@ class ThreadedTrainer(Thread):
             self._set_info("max_epoch", net["epoch"])
             model.train()
             
-            #Start training
+            #region epoch loop
             for self.epoch in range(start,net["epoch"]):
                 self.parent.logger.update()
                 
+                #region train    
                 for i,(inputs,labels) in enumerate(trainLoader,0):
                     inputs,labels = inputs.to(DEVICE),labels.to(DEVICE)
                     optimizer.zero_grad()
@@ -222,63 +253,36 @@ class ThreadedTrainer(Thread):
                     loss.backward()
                     optimizer.step()
                     scheduler.step(self.epoch+ i/iters)
+                #endregion
                 
-                self.parent.non_zero_saver.step(key,model)
+                if non_zero: self.parent._add_non_zero(key,model)      
                 
                 if (self.epoch % self.parent.acc_update == self.parent.acc_update-1) or self.parent._kill.is_set():
                     self._set_info("accuracy",n_utils.get_accuracy(model, testLoader,DEVICE))
                     self._set_info("last_update",self.epoch+1)
-                    self._save_incomplete(key,model,optimizer,self.epoch+1)                    
+                    self.parent._save_incomplete(key,model,optimizer,self.epoch+1)
+                    if non_zero: self.parent._save_non_zero()                 
                     if self.parent._kill.is_set():
                         return self.info["accuracy"]
                 
                 if self.epoch == 0: self.parent.logger.big_update() # To get max GPU usage update
-            
-            #finished        
-            acc = n_utils.get_accuracy(model, testLoader,DEVICE)
-            torch.save(model.state_dict(),self.SAVE_NETWORK_PATH+f"{key}.pth")
-            self._remove_incomplete(key)
-            
-            self.parent.non_zero_saver.save()
             #endregion
             
-            return acc                               
-        
-        def _save_incomplete(self,key:str,model:nn.Module,optimizer:torch.optim.Optimizer,epoch):
-            torch.save(model.state_dict(),self.SAVE_NETWORK_PATH+f".{key}_INCOMPLETE.pth")
-            torch.save(optimizer.state_dict(),self.SAVE_NETWORK_PATH+f".{key}_OPTIM_INCOMPLETE.pth")
-            self.parent.non_zero_saver.save()
-            with self.parent._lock:
-                with open(self.SAVE_NETWORK_PATH+".INCOMPLETE.json","r+") as f:
-                    data = json.load(f)
-                    data[key] = epoch
-                    f.seek(0,0)
-                    json.dump(data,f)
-                
-        def _remove_incomplete(self,key:str):
-            os.remove(self.SAVE_NETWORK_PATH+f".{key}_INCOMPLETE.pth")
-            os.remove(self.SAVE_NETWORK_PATH+f".{key}_OPTIM_INCOMPLETE.pth")
-            with self.parent._lock:
-                with open(self.SAVE_NETWORK_PATH+".INCOMPLETE.json","r+") as f:
-                    data:dict = json.load(f)
-                    data.pop(key,None)
-                    f.seek(0,0)
-                    json.dump(data,f)
-                
+            self.parent._save(key,model,n_utils.get_accuracy(model, testLoader,DEVICE))
+            #endregion
+                                          
         def run(self) -> None:
             error_time_out = 60
-            self.parent._available.wait()
             buffer = None
             try :
                 while( not self.parent._kill.is_set()):
+                    self.parent._available.wait()
                     buffer = self.parent._get_next_in_queue()
                     if buffer is None:
-                        self.parent._available.wait()
                         continue
                     try :
                         self._done.clear()
-                        res = self._train(*buffer)
-                        self.parent._add_results(buffer[0],res)
+                        self._train(*buffer)
                         self._set_info_default()
                         sleep(5)
                     except RuntimeError as e:
@@ -290,33 +294,9 @@ class ThreadedTrainer(Thread):
                         else:
                             raise e
             except Exception as e:
+                self._set_info_default()
                 self.parent._error(self.name,buffer,e)
-                  
-    class NonZeroSaver:
-        def __init__(self,SAVE_PATH) -> None:
-            self.SAVE_PATH = SAVE_PATH
-            self.n0list:Dict[str,Dict[str,list]] = {}
-            
-        def register(self,key:str,non_zero:bool):
-            if non_zero:
-                self.n0list[key] = {
-                    "conv_like": [],
-                    "FC1": [],
-                    "FC2": []
-                }
-                
-        def step(self,key:str,model:nn.Module):
-            if key in self.n0list:
-                self.n0list[key]["conv_like"].append(n_utils.count_non_zero_parameters(model,"conv_like"))
-                self.n0list[key]["FC1"].append(n_utils.count_non_zero_parameters(model,"FC.0"))
-                self.n0list[key]["FC2"].append(n_utils.count_non_zero_parameters(model,"FC.3"))
-        
-        def save(self):
-            with open(self.SAVE_PATH,"r+") as file:
-                file_data:dict = json.load(file)
-                file_data.update(self.n0list)
-                file.seek(0)
-                json.dump(file_data,file)
+                raise e
 
     class Logger(Thread):
         def __init__(self,trainer,line_size=11):
@@ -354,7 +334,7 @@ class ThreadedTrainer(Thread):
             a = f"{len(self.trainer.queue)} tasks remaining\n" 
             
             l = [str(i+1)+". " + x[0] for i,x in enumerate(self.trainer.queue)]
-            ml = max([len(i) for i in l])
+            ml = max([len(i) for i in l],default=0)
             for i in range(len(l)//2):
                 a += "\t" + l[i] 
                 a += " "*(ml-len(l[i])+10)
@@ -441,7 +421,7 @@ class ThreadedTrainer(Thread):
             for i in self.trainer.threads:
                 i._done.wait(20)
             self._print()  
-
+    #endregion
 def network_thread(optim:dict,network_name:str,trainer:ThreadedTrainer):
     Thread(target=network_Optimizer,args=(optim,network_name,trainer)).start()
 
