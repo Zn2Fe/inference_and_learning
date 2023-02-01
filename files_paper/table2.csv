@@ -1,13 +1,13 @@
-Model,Training_Method,CIFAR-10,CIFAR-100,SVHN,train
-S-CONV,SGD,0%,0%,0%,True
-S-LOCAL,SGD,0%,0%,0%,True
-MLP (Neyshabur et al. 2019),SGD,58.1%,,84.3%,False
-MLP (Mukkamala and Hein 2017),ADAM_RMS,72.2%,39.3%,,False
-MLP (Mocanu et al. 2018),SET,74.84%,,,False
-MLP (Urban et al. 2017),deep_conv_teacher,74.3%,,,False
-MLP (Lin et al. 2016),ZAE,78.62%,,,False
-3-FC,SGD,0%,0%,0%,True
-S-FC,SGD,0%,0%,0%,True
-S-FC,B-lasso(B=0),0%,0%,0%,True
-S-FC,B-lasso(B=10),0%,0%,0%,True
-S-FC,B-lasso(B=50),0%,0%,0%,True
+Model,Training_Method,CIFAR-10,CIFAR-100,SVHN
+S-CONV,SGD,0%,0%,0% 
+S-LOCAL,SGD,0%,0%,0% 
+MLP (Neyshabur et al. 2019),SGD,58.1%,,84.3%  
+MLP (Mukkamala and Hein 2017),ADAM_RMS,72.2%,39.3%,  
+MLP (Mocanu et al. 2018),SET,74.84%,,  
+MLP (Urban et al. 2017),deep_conv_teacher,74.3%,,  
+MLP (Lin et al. 2016),ZAE,78.62%,,  
+3-FC,SGD,0%,0%,0% 
+S-FC,SGD,0%,0%,0% 
+S-FC,B-lasso(B=0),0%,0%,0% 
+S-FC,B-lasso(B=10),0%,0%,0% 
+S-FC,B-lasso(B=50),0%,0%,0% 

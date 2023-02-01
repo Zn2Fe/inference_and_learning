@@ -85,8 +85,8 @@ def count_non_zero_parameters(model:nn.Module,sub:str = ""):
         sub (str, optional): The name of the submodule to count the parameters. Defaults to entire model.
     """
     if sub == "":
-        return sum(p.to(torch.bool).sum() for p in model.parameters())
-    return sum(p.to(torch.bool).sum() for p in model.get_submodule(sub).parameters())
+        return int(sum(p.to(torch.bool).sum() for p in model.parameters()))
+    return int(sum(p.to(torch.bool).sum() for p in model.get_submodule(sub).parameters()))
 
  
 #endregion

@@ -6,18 +6,19 @@ from torch import Tensor
 import torch.nn as nn
 import torch.nn.functional as F
 from typing import Tuple,List,Type,OrderedDict,Optional,Callable
+from networks.network import Network
 
-def get_model(des:dict,image_size,out_size):
-    if des["name"] in ["D-CONV","D-FC","D-LOCAL","S-CONV","S-FC","S-LOCAL"]:
-        lm,cm = des["name"].split("-")
+def get_model(model:Network.Model,image_size,out_size):
+    if model.name in ["D-CONV","D-FC","D-LOCAL","S-CONV","S-FC","S-LOCAL"]:
+        lm,cm = model.name.split("-")
         cl = {"CONV":CV_Custom,"FC":FC_custom,"LOCAL":LL_custom}[cm]
         ll = {"D":D_Conv,"S":S_Conv}[lm]
-        return ll(des["alpha"],cl,image_size,out_size,dropout_1=des["dropout_1"],dropout_2=des["dropout_2"])
-    if des["name"] == "3-FC":
-        return FC_3(des["alpha"],image_size,out_size,dropout_1=des["dropout_1"],dropout_2=des["dropout_2"])
-    if des["name"] == "MLP1":
-        return MLP(3,image_size,[des["alpha"],des["alpha"]],out_size)
-    raise ValueError(f"Model not found : {des['name']}")
+        return ll(model["alpha"],cl,image_size,out_size,dropout_1=model["dropout_1"],dropout_2=model["dropout_2"])
+    if model.name == "3-FC":
+        return FC_3(model["alpha"],image_size,out_size,dropout_1=model["dropout_1"],dropout_2=model["dropout_2"])
+    if model.name == "MLP1":
+        return MLP(3,image_size,[model["alpha"],model["alpha"]],out_size)
+    raise ValueError(f"Model not found : {model.name}")
 
 
 #region DataViewLayers
@@ -82,7 +83,6 @@ class interfaceModule():
         pass
     def get_module(self) -> Tuple[int,int,nn.Module]:
         raise ValueError("interaceModule should not be called")
-
 class CV_Custom(nn.Module,interfaceModule):
     """Custom Convolutional layer, apply batch norm and relu
     
@@ -206,13 +206,13 @@ class D_Conv(nn.Module,interfaceModel):
         out_size = 10,
         dropout_1 = 0,
         dropout_2 = 0 ) -> None:
-        super(D_Conv).__init__()
+        super().__init__()
         
         alpha = base_channel_size
         channel_size :int = 3
         im_size : int = image_size
         
-        modules : List[nn.Module] = []
+        modules : OrderedDict[str,nn.Module] = OrderedDict()
         size_conv = [
             (alpha,1),
             (2*alpha,2),
@@ -226,21 +226,20 @@ class D_Conv(nn.Module,interfaceModel):
         for i,val in enumerate(size_conv):
             size_out, stride = val
             im_size,channel_size,new_module = net_type(channel_size,size_out,3,stride,im_size).get_module()
-            modules.append(new_module)
-            
-        self.conv_like = nn.Sequential(*modules)
-        
-        modules = [
-            nn.Linear(channel_size*im_size**2,24*alpha).half(),
-            tofloat32(nn.BatchNorm1d(24*alpha,dtype=torch.float32)),
-            nn.ReLU()
-        ]
+            modules[f"{i}"] = new_module
+        self.conv_like = nn.Sequential(modules)
+        modules.clear()
+        modules.update ({
+            "FC1": nn.Linear(channel_size*im_size**2,24*alpha).half(),
+            "Batch":tofloat32(nn.BatchNorm1d(24*alpha,dtype=torch.float32)),
+            "Relu1":nn.ReLU()
+        })
         if dropout_1 != 0:
-            modules.append(nn.Dropout(dropout_1))
-        modules.append(nn.Linear(24*alpha,out_size).half())
+            modules["Dropout_1"] = nn.Dropout(dropout_1)
+        modules["FC2"]=(nn.Linear(24*alpha,out_size).half())
         if dropout_2!=0:
-            modules.append(nn.Dropout(dropout_2))
-        self.FC = nn.Sequential(*modules)
+            modules["Dropout_2"] = nn.Dropout(dropout_2)
+        self.FC = nn.Sequential(modules)
 
     def forward(self, x:torch.Tensor) -> torch.Tensor:
         x = self.conv_like(x)
@@ -276,21 +275,21 @@ class S_Conv(nn.Module,interfaceModel):
         channel_size :int = 3
         im_size : int = image_size
         
-        modules : List[nn.Module] = []
+        modules : OrderedDict[str,nn.Module] = OrderedDict()
         
         im_size,channel_size, self.conv_like = net_type(channel_size,alpha,9,2,im_size).get_module()
         
-        modules = [
-            nn.Linear(channel_size*im_size**2,24*alpha).half(),
-            tofloat32(nn.BatchNorm1d(24*alpha,dtype=torch.float32)),
-            nn.ReLU()
-        ]
+        modules.update ({
+            "FC1": nn.Linear(channel_size*im_size**2,24*alpha).half(),
+            "Batch":tofloat32(nn.BatchNorm1d(24*alpha,dtype=torch.float32)),
+            "Relu1":nn.ReLU()
+        })
         if dropout_1 != 0:
-            modules.append(nn.Dropout(dropout_1))
-        modules.append(nn.Linear(24*alpha,out_size).half())
+            modules["Dropout_1"] = nn.Dropout(dropout_1)
+        modules["FC2"]=(nn.Linear(24*alpha,out_size).half())
         if dropout_2!=0:
-            modules.append(nn.Dropout(dropout_2))
-        self.FC = nn.Sequential(*modules)
+            modules["Dropout_2"] = nn.Dropout(dropout_2)
+        self.FC = nn.Sequential(modules)
         
     def forward(self, x:torch.Tensor) -> torch.Tensor:
         x = self.conv_like(x)

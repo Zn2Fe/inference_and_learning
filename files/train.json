@@ -1,7 +1,7 @@
 {
     "S-CONV_SGD_CIFAR-10" :{
         "batch_size": 512,
-        "epoch":4000,
+        "epoch":400,
         "use_cuda":true,
 
         "optimizer":{
@@ -24,7 +24,7 @@
         },
         "scheduler":{
             "name":"CosineAnnealingWarmRestarts",
-            "T_0": 130,
+            "T_0": 13,
             "T_mult": 2,
             "eta_min": 0,
             "last_epoch": -1
@@ -33,7 +33,7 @@
     },
     "S-CONV_SGD_CIFAR-100" :{
         "batch_size": 512,
-        "epoch":4000,
+        "epoch":400,
         "use_cuda":true,
 
         "optimizer":{
@@ -56,7 +56,7 @@
         },
         "scheduler":{
             "name":"CosineAnnealingWarmRestarts",
-            "T_0": 130,
+            "T_0": 13,
             "T_mult": 2,
             "eta_min": 0,
             "last_epoch": -1
@@ -65,7 +65,7 @@
     },
     "S-CONV_SGD_SVHN" :{
         "batch_size": 512,
-        "epoch":4000,
+        "epoch":400,
         "use_cuda":true,
 
         "optimizer":{
@@ -88,7 +88,7 @@
         },
         "scheduler":{
             "name":"CosineAnnealingWarmRestarts",
-            "T_0": 130,
+            "T_0": 13,
             "T_mult": 2,
             "eta_min": 0,
             "last_epoch": -1
@@ -98,8 +98,8 @@
     
 
     "S-LOCAL_SGD_CIFAR-10":{
-        "batch_size": 512,
-        "epoch":4000,
+        "batch_size": 128,
+        "epoch":400,
         "use_cuda":true,
         "optimizer":{
             "name":"SGD",
@@ -121,7 +121,7 @@
         },
         "scheduler":{
             "name":"CosineAnnealingWarmRestarts",
-            "T_0": 130,
+            "T_0": 13,
             "T_mult": 2,
             "eta_min": 0,
             "last_epoch": -1
@@ -129,8 +129,8 @@
         
     },
     "S-LOCAL_SGD_CIFAR-100":{
-        "batch_size": 512,
-        "epoch":4000,
+        "batch_size": 128,
+        "epoch":400,
         "use_cuda":true,
         "optimizer":{
             "name":"SGD",
@@ -152,7 +152,7 @@
         },
         "scheduler":{
             "name":"CosineAnnealingWarmRestarts",
-            "T_0": 130,
+            "T_0": 13,
             "T_mult": 2,
             "eta_min": 0,
             "last_epoch": -1
@@ -160,8 +160,8 @@
         
     },
     "S-LOCAL_SGD_SVHN":{
-        "batch_size": 512,
-        "epoch":4000,
+        "batch_size": 128,
+        "epoch":400,
         "use_cuda":true,
         "optimizer":{
             "name":"SGD",
@@ -183,7 +183,7 @@
         },
         "scheduler":{
             "name":"CosineAnnealingWarmRestarts",
-            "T_0": 130,
+            "T_0": 13,
             "T_mult": 2,
             "eta_min": 0,
             "last_epoch": -1
@@ -193,7 +193,7 @@
 
     "3-FC_SGD_CIFAR-10": {
         "batch_size": 512,
-        "epoch":4000,
+        "epoch":400,
         "use_cuda": true,
         "optimizer": {
             "name": "SGD",
@@ -223,7 +223,7 @@
     },
     "3-FC_SGD_CIFAR-100": {
         "batch_size": 512,
-        "epoch":4000,
+        "epoch":400,
         "use_cuda": true,
         "optimizer": {
             "name": "SGD",
@@ -253,7 +253,7 @@
     },
     "3-FC_SGD_SVHN": {
         "batch_size": 512,
-        "epoch":4000,
+        "epoch":400,
         "use_cuda": true,
         "optimizer": {
             "name": "SGD",
@@ -284,7 +284,7 @@
 
     "S-FC_SGD_CIFAR-10":{
         "batch_size": 512,
-        "epoch":4000,
+        "epoch":400,
         "use_cuda":true,
         "optimizer":{
             "name":"SGD",
@@ -306,7 +306,7 @@
         },
         "scheduler":{
             "name":"CosineAnnealingWarmRestarts",
-            "T_0": 130,
+            "T_0": 13,
             "T_mult": 2,
             "eta_min": 0,
             "last_epoch": -1
@@ -314,7 +314,7 @@
     },
     "S-FC_SGD_CIFAR-100":{
         "batch_size": 512,
-        "epoch":4000,
+        "epoch":400,
         "use_cuda":true,
         "optimizer":{
             "name":"SGD",
@@ -336,7 +336,7 @@
         },
         "scheduler":{
             "name":"CosineAnnealingWarmRestarts",
-            "T_0": 130,
+            "T_0": 13,
             "T_mult": 2,
             "eta_min": 0,
             "last_epoch": -1
@@ -344,7 +344,7 @@
     },
     "S-FC_SGD_SVHN":{
         "batch_size": 512,
-        "epoch":4000,
+        "epoch":400,
         "use_cuda":true,
         "optimizer":{
             "name":"SGD",
@@ -366,7 +366,7 @@
         },
         "scheduler":{
             "name":"CosineAnnealingWarmRestarts",
-            "T_0": 130,
+            "T_0": 13,
             "T_mult": 2,
             "eta_min": 0,
             "last_epoch": -1
@@ -375,7 +375,7 @@
 
     "S-FC_B-lasso(B=0)_CIFAR-10":{
         "batch_size": 512,
-        "epoch":4000,
+        "epoch":400,
         "use_cuda":true,
         "optimizer":{
             "name":"B-lasso",
@@ -398,7 +398,7 @@
         },
         "scheduler":{
             "name":"CosineAnnealingWarmRestarts",
-            "T_0": 130,
+            "T_0": 13,
             "T_mult": 2,
             "eta_min": 0,
             "last_epoch": -1
@@ -407,7 +407,7 @@
     },
     "S-FC_B-lasso(B=0)_CIFAR-100":{
         "batch_size": 512,
-        "epoch":4000,
+        "epoch":400,
         "use_cuda":true,
         "optimizer":{
             "name":"B-lasso",
@@ -430,7 +430,7 @@
         },
         "scheduler":{
             "name":"CosineAnnealingWarmRestarts",
-            "T_0": 130,
+            "T_0": 13,
             "T_mult": 2,
             "eta_min": 0,
             "last_epoch": -1
@@ -439,7 +439,7 @@
     },
     "S-FC_B-lasso(B=0)_SVHN":{
         "batch_size": 512,
-        "epoch":4000,
+        "epoch":400,
         "use_cuda":true,
         "optimizer":{
             "name":"B-lasso",
@@ -462,7 +462,7 @@
         },
         "scheduler":{
             "name":"CosineAnnealingWarmRestarts",
-            "T_0": 130,
+            "T_0": 13,
             "T_mult": 2,
             "eta_min": 0,
             "last_epoch": -1
@@ -472,7 +472,7 @@
 
     "S-FC_B-lasso(B=10)_CIFAR-10":{
         "batch_size": 512,
-        "epoch":4000,
+        "epoch":400,
         "use_cuda":true,
         "optimizer":{
             "name":"B-lasso",
@@ -495,7 +495,7 @@
         },
         "scheduler":{
             "name":"CosineAnnealingWarmRestarts",
-            "T_0": 130,
+            "T_0": 13,
             "T_mult": 2,
             "eta_min": 0,
             "last_epoch": -1
@@ -504,7 +504,7 @@
     },
     "S-FC_B-lasso(B=10)_CIFAR-100":{
         "batch_size": 512,
-        "epoch":4000,
+        "epoch":400,
         "use_cuda":true,
         "optimizer":{
             "name":"B-lasso",
@@ -527,7 +527,7 @@
         },
         "scheduler":{
             "name":"CosineAnnealingWarmRestarts",
-            "T_0": 130,
+            "T_0": 13,
             "T_mult": 2,
             "eta_min": 0,
             "last_epoch": -1
@@ -536,7 +536,7 @@
     },
     "S-FC_B-lasso(B=10)_SVHN":{
         "batch_size": 512,
-        "epoch":4000,
+        "epoch":400,
         "use_cuda":true,
         "optimizer":{
             "name":"B-lasso",
@@ -559,7 +559,7 @@
         },
         "scheduler":{
             "name":"CosineAnnealingWarmRestarts",
-            "T_0": 130,
+            "T_0": 13,
             "T_mult": 2,
             "eta_min": 0,
             "last_epoch": -1
@@ -569,7 +569,7 @@
 
     "S-FC_B-lasso(B=50)_CIFAR-10":{
         "batch_size": 512,
-        "epoch":4000,
+        "epoch":400,
         "use_cuda":true,
         "optimizer":{
             "name":"B-lasso",
@@ -592,7 +592,7 @@
         },
         "scheduler":{
             "name":"CosineAnnealingWarmRestarts",
-            "T_0": 130,
+            "T_0": 13,
             "T_mult": 2,
             "eta_min": 0,
             "last_epoch": -1
@@ -601,7 +601,7 @@
     },
     "S-FC_B-lasso(B=50)_CIFAR-100":{
         "batch_size": 512,
-        "epoch":4000,
+        "epoch":400,
         "use_cuda":true,
         "optimizer":{
             "name":"B-lasso",
@@ -624,7 +624,7 @@
         },
         "scheduler":{
             "name":"CosineAnnealingWarmRestarts",
-            "T_0": 130,
+            "T_0": 13,
             "T_mult": 2,
             "eta_min": 0,
             "last_epoch": -1
@@ -633,7 +633,7 @@
     },
     "S-FC_B-lasso(B=50)_SVHN":{
         "batch_size": 512,
-        "epoch":4000,
+        "epoch":400,
         "use_cuda":true,
         "optimizer":{
             "name":"B-lasso",
@@ -656,7 +656,7 @@
         },
         "scheduler":{
             "name":"CosineAnnealingWarmRestarts",
-            "T_0": 130,
+            "T_0": 13,
             "T_mult": 2,
             "eta_min": 0,
             "last_epoch": -1

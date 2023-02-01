@@ -1,5 +1,5 @@
 tests
 .vscode/settings.json
-data
-networks_saved
-networks.__pycache__
+data/*
+*.pth
+*.pyc

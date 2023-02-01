@@ -6,34 +6,35 @@ from torch import Tensor
 from torch.optim.optimizer import Optimizer,required,_use_grad_for_differentiable
 import torch.nn as nn
 
-import networks.custom_layers as cl
+import networks.custom_layers as n_cl
+from networks.network import Network
 
-from typing import List, Tuple, Dict, Optional, Callable
+from typing import List, Tuple, Dict, Optional, Callable,Union
 
 #region getters
 
-def get_scheduler(des:dict,optimizer:optim.Optimizer):
-    if des["name"] == "CosineAnnealingWarmRestarts":
+def get_scheduler(des:Network.Scheduler,optimizer:optim.Optimizer):
+    if des.name == "CosineAnnealingWarmRestarts":
             return optim.lr_scheduler.CosineAnnealingWarmRestarts(
                 optimizer,
                 T_0 = des["T_0"],
                 T_mult=des["T_mult"],
                 last_epoch=des["last_epoch"])
-    raise ValueError(f"Scheduler not found :{des['name']} ")
+    raise ValueError(f"Scheduler not found :{des.name} ")
 
 
-def get_optimizer(des:dict,model:nn.Module)->optim.Optimizer:
-    if des["name"] == "SGD":
+def get_optimizer(des:Network.Optimizer,model:nn.Module)->optim.Optimizer:
+    if des.name == "SGD":
             return optim.SGD(model.parameters(),lr=des["lr"],momentum=des["momentum"],weight_decay=des["weight_decay"])
-    if des["name"] == "B-lasso":
-            if not isinstance(model,cl.interfaceModel):
+    if des.name == "B-lasso":
+            if not isinstance(model,n_cl.interfaceModel):
                 raise ValueError("B-lasso optimizer only works with B-lasso models")
             return B_LASSO([
                 {'params': model.conv_like.parameters(), 'l1':des["l1_coeff"],"B":des["B"]},
                 {'params': model.FC.parameters(), 'l1':des["l1_coeff_FC"],"B":des["B"]}
                 ],lr=des["lr"],l1=des["l1_coeff"],B=des["B"],foreach=True)
    
-    raise ValueError(f"Optimizer not found :{des['name']} ")
+    raise ValueError(f"Optimizer not found :{des.name} ")
 #endregion
 
 #region scheduler
@@ -145,8 +146,8 @@ class B_LASSO(Optimizer):
 def b_lasso(params: List[Tensor],
         d_p_list: List[Tensor],
         momentum_buffer_list: List[Optional[Tensor]],
-        has_sparse_grad: bool = None,
-        foreach: bool = None,
+        has_sparse_grad: Union[bool,None] = None,
+        foreach: Union[bool,None] = None,
         *,
         weight_decay: float,
         momentum: float,
@@ -268,10 +269,10 @@ def _multi_tensor_b_lasso(params: List[Tensor],
         else:
             bufs = []
             for i in range(len(momentum_buffer_list)):
-                if momentum_buffer_list[i] is None:
+                if  momentum_buffer_list[i] is None:
                     buf = momentum_buffer_list[i] = torch.clone(grads[i]).detach()
                 else:
-                    buf = momentum_buffer_list[i]
+                    buf: torch.Tensor = momentum_buffer_list[i]
                     buf.mul_(momentum).add_(grads[i], alpha=1 - dampening)
 
                 bufs.append(buf)
