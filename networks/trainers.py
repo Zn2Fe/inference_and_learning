@@ -20,6 +20,12 @@ from IPython.display import clear_output
 import os
 from copy import deepcopy
 
+clear_terminal = lambda: os.system('cls' if os.name in ('nt', 'dos') else 'clear')
+try:
+    shell = get_ipython().__class__.__name__
+    clear_terminal = clear_output
+except NameError:
+    pass      # Probably standard Python interpreter
 
 class ThreadedTrainer():
     """Threaded trainer class, used to train multiple networks at the same time
@@ -32,16 +38,16 @@ class ThreadedTrainer():
     """
     
         
-    __instance = None
+    _instance = None
     
     #region constructors and destructor
     def __new__(cls, *args, **kwargs):
-        if cls.__instance is not None:
+        if cls._instance is not None:
             print("Too avoid having too many threads, old ThreadedTrainer will be deleted")
-            del cls.__instance
+            del cls._instance
             print("Creating a new ThreadedTrainer")
-        cls.__instance = super(ThreadedTrainer, cls).__new__(cls)
-        return cls.__instance
+        cls._instance = super(ThreadedTrainer, cls).__new__(cls)
+        return cls._instance
     
     def __init__(self,
                  num_threads:int,
@@ -74,7 +80,6 @@ class ThreadedTrainer():
         self.queue: List[Tuple[str,Network,bool]] = []
         self.results: Dict[str,float] = {}
         self._non_zero: Dict[str,Dict[str,List[int]]] = {}
-        self._non_zero_buffer: Dict[str,Dict[str,List[int]]] = {}
         self._incomplete: Dict[str,int] = {}
         #endregion
         #region Events
@@ -102,14 +107,20 @@ class ThreadedTrainer():
             t.start()
         #endregion
         print("Trainer ready")
-            
+    
     def __del__(self):
+        self.suppr()
+            
+    def suppr(self):
+        ThreadedTrainer._instance = None
+        self.clear()
         self._kill.set()
         self._available.set()
         for t in self.threads:
             t.join()
-        self.threads.clear()  
-        ThreadedTrainer.__instance = None
+        for i in range(len(self.threads)):
+            t = self.threads.pop()
+            del t  
         print("Trainer killed")
     #endregion
     
@@ -205,24 +216,8 @@ class ThreadedTrainer():
     #endregion
     
     #region non zero access methods
-    def _add_non_zero(self,key:str,model:nn.Module):
-        """Private method, save the current number of non zero parameters of S-[FC-CONV-LOCAL] networks to a buffer (should be called at the end of each epoch)
-
-        Args:
-            key (str): name of the network
-            model (nn.Module): network 
-        """
-        with self._lock:
-            if key not in self._non_zero_buffer:
-                self._non_zero_buffer[key] = {
-                    "conv_like":[],
-                    "FC1":[],
-                    "FC2":[]
-                }
-        self._non_zero_buffer[key]["conv_like"].append(n_utils.count_non_zero_parameters(model,"conv_like"))
-        self._non_zero_buffer[key]["FC1"].append(n_utils.count_non_zero_parameters(model,"FC.FC1"))
-        self._non_zero_buffer[key]["FC2"].append(n_utils.count_non_zero_parameters(model,"FC.FC2"))
-    def _save_non_zero(self,key:str):
+    
+    def _save_non_zero(self,key:str,buffer:Dict[str,List[int]]):
         """Private method, save number of non zero parameters to file, empty the buffer"""
         with self._lock:
             if not key in self._non_zero:
@@ -231,11 +226,14 @@ class ThreadedTrainer():
                     "FC1":[],
                     "FC2":[]
                 }
-            if key in self._non_zero_buffer:
-                self._non_zero[key]["conv_like"].extend(self._non_zero_buffer[key]["conv_like"])
-                self._non_zero[key]["FC1"].extend(self._non_zero_buffer[key]["FC1"])
-                self._non_zero[key]["FC2"].extend(self._non_zero_buffer[key]["FC2"])
-                self._non_zero_buffer.pop(key,None)
+           
+            self._non_zero[key]["conv_like"].extend(buffer["conv_like"])
+            buffer["conv_like"].clear()
+            self._non_zero[key]["FC1"].extend(buffer["FC1"])
+            buffer["FC1"].clear()
+            self._non_zero[key]["FC2"].extend(buffer["FC2"])
+            buffer["FC2"].clear()
+            
             if self.SAVE_NON_ZERO is not None:
                 with open(self.SAVE_NON_ZERO,"w") as f:
                     json.dump(self._non_zero,f,indent=4)
@@ -264,19 +262,22 @@ class ThreadedTrainer():
         with self._lock:
             self.queue.clear()
     def progress(self):
-        """Print the progress of the training with update"""
+        """Print the progress of the training with update
+        Clear the output before printing (this may cause some flickering)
+        To avoid flickering, you can print without the update by calling :
+        print(`your_instance`). 
+        """
         self._big_update()
         while True:
             self._update_event.wait()
             if self._big_update_event.is_set():
-                clear_output()
+                clear_terminal()
                 sleep(0.1)
                 print(self,end="")   
                 self._big_update_event.clear()
-            else :
-                print(self._get_epoch_line(),end="")
+                sleep(0.1)
+            print(self._get_epoch_line(),end="")
             self._update_event.clear()
-            sleep(2)
     #endregion
     
     #region __str__ methods
@@ -301,8 +302,10 @@ class ThreadedTrainer():
         t: ThreadedTrainer.Trainers = thread
         if info_name == "epoch":
             return self._to_str(t.epoch)
-        if info_name in ["epoch","size","device","accuracy","last_update"]:
+        if info_name in ["epoch","device","accuracy","last_update"]:
             return self._to_str(t.info[info_name])
+        if info_name == "size":
+            return self._to_str(t.info["size"]/1e6) + "M"
         if t.network is None:
             return "NaN"
         if info_name == "model":
@@ -358,7 +361,7 @@ class ThreadedTrainer():
 
         return a + "\n"        
     def _get_epoch_line(self)->str:    
-        return "    " + "Epoch     || " + self._line(lambda x : self._get_thread_info(x,"epoch")) + " ||\r"       
+        return "\r    " + "Epoch     || " + self._line(lambda x : self._get_thread_info(x,"epoch")) + " ||"       
     def _get_thread(self)->str:
         a = "THREADS :\n"
         a+= "    " + "Thread    || " + self._line_center(lambda x: x.name)                                      + " ||\n"
@@ -366,8 +369,8 @@ class ThreadedTrainer():
         a+= "    " + "Model     || " + self._line(lambda x: self._get_thread_info(x,"model"))                   + " ||\n"
         a+= "    " + "Dataset   || " + self._line(lambda x: self._get_thread_info(x,"dataset"))                 + " ||\n"
         a+= "    " + "Optimizer || " + self._line(lambda x: self._get_thread_info(x,"optimizer"))               + " ||\n"
-        a+= "    " + "cuda      || " + self._line(lambda x: self._get_thread_info(x,"device"))                  + " ||\n"
-        a+= "    " + "epoch max || " + self._line(lambda x: self._get_thread_info(x,"max_epoch"))               + " ||\n"
+        a+= "    " + "DEVICE    || " + self._line(lambda x: self._get_thread_info(x,"device"))                  + " ||\n"
+        a+= "    " + "Epoch max || " + self._line(lambda x: self._get_thread_info(x,"max_epoch"))               + " ||\n"
         a+= "    " + "Size      || " + self._line(lambda x: self._get_thread_info(x,"size"))                    + " ||\n"
         a+= "    " + "----------||-" + "-|-".join(["-"*self._line_size for i in self.threads])                   + "-||\n"
         a+= "    " + "Accuracy  || " + self._line2(
@@ -398,6 +401,8 @@ class ThreadedTrainer():
             self.info :Dict[str,Any] = self._default_info()
             self.network :Union[Network,None] = None
             self._done = Event()
+            #buffer for non_zero parameters
+            self._non_zero_buffer = {} 
             #region CONSTANTS
             self.DATA_PATH = self.parent.DATA_PATH
             #endregion
@@ -427,6 +432,7 @@ class ThreadedTrainer():
             self.info.update(self._default_info())
             self.network = None
             self.epoch = 0
+            self._non_zero_buffer = {}
             self.parent._big_update()
             self._done.set()
             for t in self.parent.threads:
@@ -434,6 +440,22 @@ class ThreadedTrainer():
                     return
             self.parent.done.set()
 
+        def _add_non_zero(self,model:nn.Module):
+            """Private method, save the current number of non zero parameters of S-[FC-CONV-LOCAL] networks to a buffer (should be called at the end of each epoch)
+
+            Args:
+                model (nn.Module): network 
+            """
+            if self._non_zero_buffer == {}:               
+                self._non_zero_buffer = {
+                    "conv_like":[],
+                    "FC1":[],
+                    "FC2":[]
+                }
+            self._non_zero_buffer["conv_like"].append(n_utils.count_non_zero_parameters(model,"conv_like"))
+            self._non_zero_buffer["FC1"].append(n_utils.count_non_zero_parameters(model,"FC.FC1"))
+            self._non_zero_buffer["FC2"].append(n_utils.count_non_zero_parameters(model,"FC.FC2"))
+        
         def _train(self,key:str,net:Network,non_zero:bool) -> None:
             """Train a model
 
@@ -453,6 +475,7 @@ class ThreadedTrainer():
             class_size,trainset,testset = dset.get_dataset(net.dataset,self.DATA_PATH)
             dataLoader = lambda train,dataset : DataLoader(dataset, batch_size=net.batch_size, shuffle= train)
             trainLoader,testLoader =  dataLoader(True,trainset), dataLoader(False,testset)
+            transform = dset.get_transform(net.dataset,DEVICE)
             #endregion
             
             #region Model
@@ -475,13 +498,14 @@ class ThreadedTrainer():
             model.train()
             
             #region epoch loop
-            if non_zero: self.parent._add_non_zero(key,model) 
+            if non_zero: self._add_non_zero(model) 
             for self.epoch in range(start,net.epoch):
                 self.parent._update()
                 
                 #region train    
                 for i,(inputs,labels) in enumerate(trainLoader,0):
-                    inputs,labels = inputs.to(DEVICE),labels.to(DEVICE)
+                    inputs_b,labels = inputs.to(DEVICE),labels.to(DEVICE)
+                    inputs = transform(inputs_b)
                     optimizer.zero_grad()
                     outputs = model(inputs)
                     loss = criterion(outputs,labels)
@@ -490,14 +514,14 @@ class ThreadedTrainer():
                     scheduler.step(self.epoch+ i/iters)
                 #endregion
                 
-                if non_zero: self.parent._add_non_zero(key,model)      
+                if non_zero: self._add_non_zero(model)      
                 
                 if (self.epoch % self.parent.saving_step == self.parent.saving_step-1) or self.parent._kill.is_set():
                     self.info["accuracy"] = n_utils.get_accuracy(model, testLoader,DEVICE)
                     self.info["last_update"] = self.epoch+1
                     self.parent._big_update()
                     self.parent._save_incomplete(key,model,optimizer,self.epoch+1)
-                    if non_zero: self.parent._save_non_zero(key)                 
+                    if non_zero: self.parent._save_non_zero(key,self._non_zero_buffer)                 
                     if self.parent._kill.is_set():
                         return 
                 
@@ -506,7 +530,7 @@ class ThreadedTrainer():
             
             #endregion
             self.parent._save(key,model,n_utils.get_accuracy(model, testLoader,DEVICE))
-            if non_zero: self.parent._save_non_zero(key)
+            if non_zero: self.parent._save_non_zero(key,self._non_zero_buffer)
                                   
         def run(self) -> None:
             """Run the thread, train a model, and save it, if the thread is killed, save the model and exit
@@ -528,6 +552,8 @@ class ThreadedTrainer():
                     self.parent._available.wait()
                     buffer = self.parent._get_next_in_queue()
                     if buffer is None:
+                        if self.parent._kill.is_set():
+                            return
                         continue
                     try :
                         self._done.clear()
@@ -555,7 +581,7 @@ class ThreadedTrainer():
                             raise e
             except Exception as e:
                 self._set_info_default()
-                self.parent._error(self.name,buffer,e)
+                self.parent._error(self.name,None,e)
                 raise e
 
 

@@ -1,3 +1,6 @@
 {
-    "S-LOCAL_SGD_CIFAR-100": 160
+    "S-LOCAL_SGD_CIFAR-10": 100,
+    "S-FC_SGD_SVHN": 80,
+    "S-FC_SGD_CIFAR-10": 360,
+    "3-FC_SGD_CIFAR-10": 20
 }
